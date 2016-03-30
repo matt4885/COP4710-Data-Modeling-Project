@@ -16,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 
 public class Project {
 	// all the stuff needed for Project execution
+   public static ArrayList<String> groupColumns = new ArrayList<String>();
 	public static boolean display_debugger_stuff = false;
 	public static boolean auto_input = false;
 	public static Boolean current_condition = null;
@@ -861,6 +862,7 @@ public class Project {
 						// add it to the temp list of columns
 						temp6.add(get_column(table_name, a));
 				}
+            
 			}
 
 			// SEMANTIC CHECK
@@ -917,15 +919,62 @@ public class Project {
 			}
 
 		}
+      
+      
+      //Check for grouping, else check for multiple grouping
+      if (tokens.get(index).value.toUpperCase().equals("GROUP")){
+			index++;
+         
+         if (!tokens.get(index).value.toUpperCase().equals("BY")){
+            parse_error.add(tokens.get(index).value + " is not valid; expecting BY.");
+         }
+         
+         index++;
+         
+         if (!tokens.get(index).value.toUpperCase().equals("(")){
+            parse_error.add(tokens.get(index).value + " is not valid; expecting (.");
+         }
+         else
+            index++;
+         
+         groupColumns.clear();
+         
+         String column = tokens.get(index).value.toUpperCase();
+         boolean match = false;
+         index++;
+         
+         
+         //temp 9 holds all colunmn names
+         for (int i = 0; i < temp9.size(); i++){
+					if(temp9.get(i).toString().toUpperCase().equals(column)){
+                  match = true;
+               }
+         }
+         
+         if(match){
+            groupColumns.add(column);
+         }
+         else{
+            semantic_error.add("The column " + column + " does not exist in the current table.");
+
+         }
+
+         
+         if (!tokens.get(index).value.toUpperCase().equals(")")){
+            parse_error.add(tokens.get(index).value + " is not valid; expecting ).");
+         }
+         else
+            index++;
+      }
+      
+      
+      
 	}
 
 	// parsing
 	public static void where() {
 		condition_1();
 		condition_2();
-
-		if (!tokens.get(index).value.equals(";"))
-			parse_error.add("Your WHERE statement has extra character(s).");
 
 		// if we are doing a NULL comparison on the where clause
 		// we need to make sure the operator is either =, != or <>
@@ -2559,6 +2608,33 @@ public class Project {
 			// at this point, all we're missing is the actual rows
 			@SuppressWarnings("unchecked")
 			ArrayList<Record> r = (ArrayList<Record>) Database.tables.get(table_name).records.clone();
+         
+         // Apply Grouping clauses
+         for (int i = 0; i < groupColumns.size(); i++) {
+            int index = -1;
+				for (int j = 0; j < temp9.size(); j++) {
+               if(temp9.get(j).toString().toUpperCase().equals(groupColumns.get(i))){
+                  index = j;
+               }
+            }
+            
+            ArrayList<String> groups = new ArrayList<String>();
+            ArrayList<Record> moveToGroup = new ArrayList<Record>();
+            
+            for(Record record : r){
+               if(groups.contains(record.cells.get(index))){
+                  moveToGroup.add(record);
+               }
+               else{
+                  groups.add(record.cells.get(index));
+               }
+            }
+            
+            for(Record record : moveToGroup){
+               r.remove(record);
+            }
+
+			}
 
 			// now we're looking at the individual rows
 			int c;
