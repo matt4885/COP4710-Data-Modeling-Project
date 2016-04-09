@@ -16,43 +16,40 @@ import java.io.UnsupportedEncodingException;
 
 public class Project {
 	// all the stuff needed for Project execution
-   public static ArrayList<String> groupColumns = new ArrayList<String>();
-	public static boolean display_debugger_stuff = false;
-	public static boolean auto_input = false;
-	public static Boolean current_condition = null;
-	public static Boolean previous_condition = null;
-	public static Scanner scanning = new Scanner(System.in);
-	public static String input = "";
-	public static ArrayList<String> commands = new ArrayList<String>();
-	public static boolean quotes = false;
-	public static ArrayList<Project> tokens = new ArrayList<Project>();
-	public static ArrayList<String> parse_error = new ArrayList<String>();
-	public static ArrayList<String> semantic_error = new ArrayList<String>();
-	public static int index; // global index
-	public static final String DELIMITER = "##";
-	public static String directory_to = "databases/";
+    private static ArrayList<String> groupColumns = new ArrayList<>();
+	private static boolean auto_input = false;
+	private static boolean display_debugger_stuff = false;
+	private static Scanner scanning = new Scanner(System.in);
+	private static String input = "";
+	private static ArrayList<String> commands = new ArrayList<>();
+	private static boolean quotes = false;
+	private static ArrayList<Project> tokens = new ArrayList<>();
+	private static ArrayList<String> parse_error = new ArrayList<>();
+	private static ArrayList<String> semantic_error = new ArrayList<>();
+	private static int index; // global index
+	private static final String DELIMITER = "##";
+	private static String directory_to = "databases/";
 	// needed for semantics
-	public static ArrayList<String> temp1 = new ArrayList<String>();
-	public static ArrayList<String> temp2 = new ArrayList<String>();
-	public static ArrayList<Integer> temp3 = new ArrayList<Integer>();
-	public static ArrayList<Integer> temp4 = new ArrayList<Integer>();
-	public static ArrayList<String> temp5 = new ArrayList<String>();
-	public static ArrayList<Column> temp6 = new ArrayList<Column>();
-	public static ArrayList<String> temp7 = new ArrayList<String>();
-	public static ArrayList<String> temp8 = new ArrayList<String>();
-	public static ArrayList<String> temp9 = new ArrayList<String>();
-	public static ArrayList<Column> temp10 = new ArrayList<Column>();
-	public static ArrayList<String> temp11 = new ArrayList<String>();
-	public static ArrayList<Column> temp12 = new ArrayList<Column>();
-	public static ArrayList<String> temp13 = new ArrayList<String>();
-	public static boolean in_where;
-	public static String table_name = "";
-	public static String command = "";
-	public static String auto_command = "CREATE DATABASE oniel_testing;Create table s (col1 varchar(5) NOT NULL, col2 int(3) NOT NULL, col3 BIT);INSERT INTO s (col1, col2) VALUES ('Sam', 1);INSERT INTO s (col1, col2) VALUES ('Alex', 2);INSERT INTO s (col1, col2) VALUES ('Mark', 3);INSERT INTO s (col1, col2) VALUES ('Carl', 4);create table t (col1 int, col2 varchar);insert into t values (1, 'oniel');insert into t values (null, 'alex');insert into t values (3, 'nick');insert into t values (4, null);";
+	private static ArrayList<String> temp1 = new ArrayList<>();
+	private static ArrayList<String> temp2 = new ArrayList<>();
+	private static ArrayList<Integer> temp3 = new ArrayList<>();
+	private static ArrayList<Integer> temp4 = new ArrayList<>();
+	private static ArrayList<String> temp5 = new ArrayList<>();
+	private static ArrayList<Column> temp6 = new ArrayList<>();
+	private static ArrayList<String> temp7 = new ArrayList<>();
+	private static ArrayList<String> temp8 = new ArrayList<>();
+	private static ArrayList<String> temp9 = new ArrayList<>();
+	private static ArrayList<Column> temp10 = new ArrayList<>();
+	private static ArrayList<String> temp11 = new ArrayList<>();
+	private static ArrayList<Column> temp12 = new ArrayList<>();
+	private static ArrayList<String> temp13 = new ArrayList<>();
+	private static boolean in_where;
+	private static String table_name = "";
+	private static String command = "";
 	////////////////////////////////////////////////////////
 	// object definitions
-	public String value;
-	public String type;
+	private String value;
+	private String type;
 
 	public static void main(String[] args)
 			throws FileNotFoundException, UnsupportedEncodingException, InterruptedException {
@@ -77,7 +74,7 @@ public class Project {
 	}
 
 	// process each command
-	public static void process() throws FileNotFoundException, UnsupportedEncodingException {
+	private static void process() throws FileNotFoundException, UnsupportedEncodingException {
 		String temp;
 
 		// while there are commands
@@ -123,6 +120,7 @@ public class Project {
 
 			// parse if no token error
 			// this also does semantics check
+
 			if (!is_parse_error()) {
 				parse();
 
@@ -189,7 +187,7 @@ public class Project {
 	}
 
 	// parse the entire program
-	public static void parse() {
+	private static void parse() {
 		// reset the global index
 		index = 0;
 
@@ -203,7 +201,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void command() {
+	private static void command() {
 		if (tokens.get(index).value.equals("LIST") && tokens.get(index + 1).value.equals("TABLES")) {
 			index += 2;
 			command = "LIST TABLES";
@@ -251,7 +249,7 @@ public class Project {
 
 	// parsing
 	@SuppressWarnings("unchecked")
-	public static void insert() {
+	private static void insert() {
 		if (tokens.get(index).value.equals("INTO"))
 			index++;
 		else
@@ -432,7 +430,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void delete() {
+	private static void delete() {
 		if (tokens.get(index).value.equals("FROM"))
 			index++;
 		else
@@ -539,7 +537,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void update() {
+	private static void update() {
 
 		table();
 
@@ -745,7 +743,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void update_set_1() {
+	private static void update_set_1() {
 		if (tokens.get(index).type.equals("attribute")) {
 			index++;
 
@@ -764,17 +762,16 @@ public class Project {
 	}
 
 	// parsing
-	public static void update_set_2() {
+	private static void update_set_2() {
 		if (tokens.get(index).value.equals(",")) {
 			index++;
 			update_set_1();
 			update_set_2();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void literal_1() {
+	private static void literal_1() {
 		if (tokens.get(index).type.equals("number") || tokens.get(index).value.equals("NULL")
 				|| tokens.get(index).type.equals("varchar")) {
 			index++;
@@ -794,17 +791,16 @@ public class Project {
 	}
 
 	// parsing
-	public static void literal_2() {
+	private static void literal_2() {
 		if (tokens.get(index).value.equals(",")) {
 			index++;
 			literal_1();
 			literal_2();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void select() {
+	private static void select() {
 		if (tokens.get(index).value.equals("*")) {
 			index++;
 		} else {
@@ -837,9 +833,9 @@ public class Project {
 				// if not SELECT *
 				// then the user manually specified the columns
 				// now we need to make sure those columns exist
-				for (int i = 0; i < temp9.size(); i++) {
-					if (!does_column_exist(table_name, temp9.get(i))) {
-						semantic_error.add("The column " + temp9.get(i) + " does not exist.");
+				for (String aTemp9 : temp9) {
+					if (!does_column_exist(table_name, aTemp9)) {
+						semantic_error.add("The column " + aTemp9 + " does not exist.");
 					}
 				}
 			}
@@ -945,11 +941,11 @@ public class Project {
          
          
          //temp 9 holds all colunmn names
-         for (int i = 0; i < temp9.size(); i++){
-					if(temp9.get(i).toString().toUpperCase().equals(column)){
-                  match = true;
-               }
-         }
+		  for (String aTemp9 : temp9) {
+			  if (aTemp9.toString().toUpperCase().equals(column)) {
+				  match = true;
+			  }
+		  }
          
          if(match){
             groupColumns.add(column);
@@ -972,7 +968,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void where() {
+	private static void where() {
 		condition_1();
 		condition_2();
 
@@ -987,14 +983,14 @@ public class Project {
 	}
 
 	// parsing
-	public static void condition_1() {
+	private static void condition_1() {
 		column_1();
 		relational_operator();
 		literal_1();
 	}
 
 	// parsing
-	public static void condition_2() {
+	private static void condition_2() {
 		if (tokens.get(index).value.equals("AND") || tokens.get(index).value.equals("OR")) {
 			index++;
 
@@ -1005,12 +1001,11 @@ public class Project {
 
 			condition_1();
 			condition_2();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void relational_operator() {
+	private static void relational_operator() {
 		if (tokens.get(index).value.equals("=") || tokens.get(index).value.equals("<")
 				|| tokens.get(index).value.equals("<=") || tokens.get(index).value.equals(">")
 				|| tokens.get(index).value.equals(">=") || tokens.get(index).value.equals("!=")
@@ -1024,7 +1019,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void create() {
+	private static void create() {
 		if (tokens.get(index).value.equals("DATABASE")) {
 			index++;
 			command = "CREATE DATABASE";
@@ -1063,7 +1058,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void drop() {
+	private static void drop() {
 		if (tokens.get(index).value.equals("DATABASE")) {
 			index++;
 			command = "DROP DATABASE";
@@ -1083,7 +1078,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void load() {
+	private static void load() {
 		if (tokens.get(index).value.equals("DATABASE")) {
 			index++;
 			database();
@@ -1092,13 +1087,13 @@ public class Project {
 	}
 
 	// parsing
-	public static void save() {
+	private static void save() {
 		// execute save command
 		// nothing to do here because this is the end of the command
 	}
 
 	// parsing
-	public static void commit() {
+	private static void commit() {
 		// execute commit command
 		// nothing to do here because this is the end of the command
 		// display message to console
@@ -1106,7 +1101,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void database() {
+	private static void database() {
 		if (tokens.get(index).type.equals("attribute")) {
 			index++;
 			Database.temp_database_name = tokens.get(index - 1).value;
@@ -1116,7 +1111,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void table() {
+	private static void table() {
 		if (tokens.get(index).type.equals("attribute")) {
 			index++;
 
@@ -1127,7 +1122,7 @@ public class Project {
 	}
 
 	// parsing
-	public static void column_1() {
+	private static void column_1() {
 		if (tokens.get(index).type.equals("attribute")) {
 			index++;
 
@@ -1152,18 +1147,17 @@ public class Project {
 	}
 
 	// parsing
-	public static void column_2() {
+	private static void column_2() {
 		if (tokens.get(index).value.equals(",")) {
 			index++;
 			column_1();
 
 			column_2();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void field_def_1() {
+	private static void field_def_1() {
 		field_name_1();
 
 		field_type();
@@ -1190,32 +1184,30 @@ public class Project {
 	}
 
 	// parsing
-	public static void field_def_2() {
+	private static void field_def_2() {
 		if (tokens.get(index).value.equals(",")) {
 			index++;
 
 			field_def_1();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void field_name_1() {
+	private static void field_name_1() {
 		column_1();
 	}
 
 	// parsing
-	public static void field_name_2() {
+	private static void field_name_2() {
 		if (tokens.get(index).value.equals(",")) {
 			index++;
 			field_name_1();
 			field_name_2();
-		} else
-			return;
+		}
 	}
 
 	// parsing
-	public static void field_type() {
+	private static void field_type() {
 		if (tokens.get(index).value.equals("INT")) {
 			index++;
 
@@ -1513,7 +1505,7 @@ public class Project {
 	}
 
 	// cleans string
-	public static String clean(String input) {
+	private static String clean(String input) {
 		// replace all new lines with spaces
 		input = input.replace("\n", " ").replace("\r", "");
 
@@ -1528,23 +1520,16 @@ public class Project {
 	}
 
 	// print SQL input thing
-	public static void print_thing() {
+	private static void print_thing() {
 		System.out.print(">  ");
 	}
 
 	// capture user's input
-	public static void capture_input() {
+	private static void capture_input() {
 		print_thing();
 
-		boolean did_this = false;
-
 		if (auto_input) {
-			if (!did_this) {
-				input = auto_command;
-				did_this = !did_this;
-			} else
-				// get the input from the console
-				input += scanning.nextLine();
+			input = "CREATE DATABASE oniel_testing;Create table s (col1 varchar(5) NOT NULL, col2 int(3) NOT NULL, col3 BIT);INSERT INTO s (col1, col2) VALUES ('Sam', 1);INSERT INTO s (col1, col2) VALUES ('Alex', 2);INSERT INTO s (col1, col2) VALUES ('Mark', 3);INSERT INTO s (col1, col2) VALUES ('Carl', 4);create table t (col1 int, col2 varchar);insert into t values (1, 'oniel');insert into t values (null, 'alex');insert into t values (3, 'nick');insert into t values (4, null);";
 			auto_input = false;
 		} else
 			// get the input from the console
@@ -1579,7 +1564,7 @@ public class Project {
 	}
 
 	// split into separate commands
-	public static void split_commands() {
+	private static void split_commands() {
 		commands.clear();
 		quotes = false;
 
@@ -1599,7 +1584,7 @@ public class Project {
 			}
 
 			// if we're outside of a quote, add it to the command list
-			if (input.substring(i, i + 1).equals(";") && quotes == false) {
+			if (input.substring(i, i + 1).equals(";") && !quotes) {
 				commands.add(input.substring(0, i + 1));
 				input = input.substring(i + 1, input.length());
 				i = 0;
@@ -1608,7 +1593,7 @@ public class Project {
 	}
 
 	// cleans out all tokens
-	public static void cleanse_tokens() {
+	private static void cleanse_tokens() {
 		// loop through all tokens
 		for (int i = 0; i < tokens.size(); i++) {
 			// check all tokens
@@ -1672,7 +1657,7 @@ public class Project {
 	}
 
 	// create tokens
-	public static void create_tokens(String temp) {
+	private static void create_tokens(String temp) {
 		// reset
 		tokens.clear();
 		quotes = false;
@@ -1809,41 +1794,36 @@ public class Project {
 	}
 
 	// checks if string is a keyword
-	public static boolean is_keyword(String input) {
+	private static boolean is_keyword(String input) {
 		input = input.toUpperCase();
-		if (input.equals("CREATE") || input.equals("DATABASE") || input.equals("DROP") || input.equals("SAVE")
+		return input.equals("CREATE") || input.equals("DATABASE") || input.equals("DROP") || input.equals("SAVE")
 				|| input.equals("COMMIT") || input.equals("LOAD") || input.equals("TABLE") || input.equals("DROP")
 				|| input.equals("INSERT") || input.equals("INTO") || input.equals("VALUES") || input.equals("DELETE")
 				|| input.equals("FROM") || input.equals("UPDATE") || input.equals("WUPDATE") || input.equals("SET")
 				|| input.equals("WHERE") || input.equals("SELECT") || input.equals("WSELECT") || input.equals("INTEGER")
 				|| input.equals("NUMBER") || input.equals("CHAR") || input.equals("INT") || input.equals("VARCHAR")
 				|| input.equals("CHARACTER") || input.equals("BIT") || input.equals("NOT") || input.equals("NULL")
-				|| input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND"))
-			return true;
+				|| input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND");
 
-		return false;
 	}
 
 	// checks if string is a token
-	public static boolean is_token(String input) {
-		if (input.equals("*") || input.equals(";") || input.equals("(") || input.equals(")") || input.equals("'")
+	private static boolean is_token(String input) {
+		return input.equals("*") || input.equals(";") || input.equals("(") || input.equals(")") || input.equals("'")
 				|| input.equals("=") || input.equals("<") || input.equals("<=") || input.equals(">")
 				|| input.equals(">=") || input.equals("!=") || input.equals("<>") || input.equals(":")
-				|| input.equals("/") || input.equals(","))
-			return true;
-
-		return false;
+				|| input.equals("/") || input.equals(",");
 
 	}
 
 	// checks if string is only letters
-	public static boolean is_letters(String input) {
+	private static boolean is_letters(String input) {
 		return Pattern.matches("[a-zA-Z]+", input);
 	}
 
 	// simplify some tokens to different version
 	// ex. INTEGER to INT
-	public static String simplify(String temp) {
+	private static String simplify(String temp) {
 		if (is_keyword(temp))
 			temp = temp.toUpperCase();
 
@@ -1857,7 +1837,7 @@ public class Project {
 	}
 
 	// checks if string is only numbers
-	public static boolean is_numeric(String input) {
+	private static boolean is_numeric(String input) {
 		try {
 			Double.parseDouble(input);
 		} catch (NumberFormatException nfe) {
@@ -1873,7 +1853,7 @@ public class Project {
 	}
 
 	// gets character type
-	public static String character_type(String input) {
+	private static String character_type(String input) {
 		if (clean(input).isEmpty())
 			return "space";
 		if (is_letters(clean(input)))
@@ -1885,23 +1865,17 @@ public class Project {
 	}
 
 	// sees if there is an error
-	public static boolean is_parse_error() {
-		if (parse_error.size() > 0)
-			return true;
-		else
-			return false;
+	private static boolean is_parse_error() {
+		return parse_error.size() > 0;
 	}
 
 	// sees if there is an error
-	public static boolean is_semantic_error() {
-		if (semantic_error.size() > 0)
-			return true;
-		else
-			return false;
+	private static boolean is_semantic_error() {
+		return semantic_error.size() > 0;
 	}
 
 	// displays the error message if there is one
-	public static void display_error() {
+	private static void display_error() {
 		if (is_parse_error()) {
 			System.out.println("   " + parse_error.get(0));
 		} else {
@@ -1914,7 +1888,7 @@ public class Project {
 	}
 
 	// sees if a string is an integer
-	public static boolean is_int(String input) {
+	private static boolean is_int(String input) {
 		try {
 			Integer.parseInt(input);
 		} catch (NumberFormatException e) {
@@ -1928,7 +1902,7 @@ public class Project {
 	}
 
 	// sees if a string is an integer
-	public static boolean is_valid_restriction(String input) {
+	private static boolean is_valid_restriction(String input) {
 		try {
 			Integer.parseInt(input);
 		} catch (NumberFormatException e) {
@@ -1940,10 +1914,7 @@ public class Project {
 		int number = Integer.parseInt(input);
 
 		// only return true if the number is a positive, int, greater than 1
-		if (number >= 1)
-			return true;
-		else
-			return false;
+		return number >= 1;
 	}
 
 	// sees if a string is a bit
@@ -1960,10 +1931,7 @@ public class Project {
 		int number = Integer.parseInt(input);
 
 		// if it's between 0 and 1, report true
-		if (number >= 0 && number <= 1)
-			return true;
-		else
-			return false;
+		return number >= 0 && number <= 1;
 	}
 
 	////////////////////////////////////////////////////////////
@@ -1971,7 +1939,7 @@ public class Project {
 	///////////////////////////////////////////////////////////
 
 	// check to make sure that a table exists
-	public static boolean does_table_exist(String table_name) {
+	private static boolean does_table_exist(String table_name) {
 		// if the table exists, return true
 		if (Database.tables.containsKey(table_name))
 			return true;
@@ -1981,7 +1949,7 @@ public class Project {
 	}
 
 	// checks to see if a column exists
-	public static boolean does_column_exist(String it, String check) {
+	private static boolean does_column_exist(String it, String check) {
 		// first, check to make sure the table exists
 		if (!does_table_exist(it))
 			return false;
@@ -1997,7 +1965,7 @@ public class Project {
 	}
 
 	// get column object
-	public static Column get_column(String it, String check) {
+	private static Column get_column(String it, String check) {
 		// first, check to make sure the table exists
 		if (!does_table_exist(it))
 			return null;
@@ -2013,24 +1981,26 @@ public class Project {
 	}
 
 	// get the default size restrictions for all different data types
-	public static int get_default_size(String data_type) {
-		if (data_type.equals("INT"))
-			return 5;
-		else if (data_type.equals("NUMBER"))
-			return 5;
-		else if (data_type.equals("CHAR"))
-			return 1;
-		else if (data_type.equals("VARCHAR"))
-			return 10;
-		else if (data_type.equals("BIT"))
-			return 1;
-		else
-			// if none match
-			return -1;
+	private static int get_default_size(String data_type) {
+		switch (data_type) {
+			case "INT":
+				return 5;
+			case "NUMBER":
+				return 5;
+			case "CHAR":
+				return 1;
+			case "VARCHAR":
+				return 10;
+			case "BIT":
+				return 1;
+			default:
+				// if none match
+				return -1;
+		}
 	}
 
 	// pass it the contents of the record, get the type
-	public static String get_type(String it) {
+	private static String get_type(String it) {
 		if (is_numeric(it))
 			return "number";
 		else if (it.equals("NULL"))
@@ -2045,31 +2015,32 @@ public class Project {
 	// pass it the contents of the record, get the type
 	// NOTE: if passing a number with a decimal, this function will only return
 	// the length of the top numbers before the decimal
-	public static int get_length(String it) {
+	private static int get_length(String it) {
 		String it2 = get_type(it);
 
-		if (it2.equals("varchar"))
-			return it.length() - 2;
-		else if (it2.equals("NULL"))
-			return 0;
-		else if (it2.equals("number")) {
+		switch (it2) {
+			case "varchar":
+				return it.length() - 2;
+			case "NULL":
+				return 0;
+			case "number":
 
-			int subtract = 0;
+				int subtract = 0;
 
-			if (it.contains("-"))
-				subtract++;
-			if (it.contains(".")) {
-				subtract += it.substring(it.indexOf("."), it.length()).length() + 1;
-			}
+				if (it.contains("-"))
+					subtract++;
+				if (it.contains(".")) {
+					subtract += it.substring(it.indexOf("."), it.length()).length() + 1;
+				}
 
-			return it.length() - subtract;
+				return it.length() - subtract;
 		}
 		// if error
 		return -1;
 	}
 
 	// see if data would be truncated
-	public static boolean is_data_truncated(Column column_to_check, String value) {
+	private static boolean is_data_truncated(Column column_to_check, String value) {
 		if (!get_type(value).equals("NULL")) {
 			if (column_to_check.restriction_2 == null || !column_to_check.column_type.equals("number")) {
 				// we don't have to worry about decimal spaces
@@ -2104,7 +2075,7 @@ public class Project {
 	}
 
 	// see if these fields can play with these fields
-	public static boolean are_we_compatible(String type1, String type2) {
+	private static boolean are_we_compatible(String type1, String type2) {
 		type1 = type1.toUpperCase();
 		type2 = type2.toUpperCase();
 
@@ -2187,7 +2158,7 @@ public class Project {
 	}
 
 	// can we use this logical operator
-	public static boolean is_relational_operator_valid(String type, String relational_operator) {
+	private static boolean is_relational_operator_valid(String type, String relational_operator) {
 		type = type.toUpperCase();
 		relational_operator = relational_operator.toUpperCase();
 
@@ -2204,7 +2175,7 @@ public class Project {
 	}
 
 	// check for duplicate columns
-	public static void check_duplicate_columns(ArrayList<String> it) {
+	private static void check_duplicate_columns(ArrayList<String> it) {
 		// SEMANTIC CHECK
 		// at this point, all the column names were inserted into temp1
 		// we need to make sure there are no duplicate column names being
@@ -2219,21 +2190,23 @@ public class Project {
 			Object[] array = temp_set.toArray();
 
 			// iterate through, remove all currently existing copies
-			for (int i = 0; i < array.length; i++)
-				t.remove(((String) array[i]));
+			for (Object anArray : array) {
+				t.remove(anArray);
+			}
 
 			// now we loop through and display the duplicates
 			// we have to convert back to hash set in case the duplicates
 			// are
 			// more than 2
 			HashSet<String> final_dupes = new HashSet<String>(t);
-			for (String a : final_dupes)
+			for (String a : final_dupes) {
 				semantic_error.add("The column " + a + " is specified multiple times.");
+			}
 		}
 	}
 
 	// gets all columns for a table that do not allow nulls
-	public static ArrayList<String> get_all_non_null_columns(String table_name) {
+	private static ArrayList<String> get_all_non_null_columns(String table_name) {
 		// first, check to make sure the table exists
 		if (!does_table_exist(table_name))
 			return null;
@@ -2252,7 +2225,7 @@ public class Project {
 	}
 
 	// get the index # of a specific column
-	public static int get_column_index(String column_name) {
+	private static int get_column_index(String column_name) {
 		column_name = column_name.toLowerCase();
 		// iterate through all columns in the table
 		for (int i = 0; i < Database.tables.get(table_name).columns.size(); i++) {
@@ -2265,7 +2238,7 @@ public class Project {
 	}
 
 	// gets all columns for a table that do not allow nulls
-	public static boolean does_column_exist_in_list(ArrayList<Column> column_list_1, String column_name) {
+	private static boolean does_column_exist_in_list(ArrayList<Column> column_list_1, String column_name) {
 		// loop through the list of columns
 		// return true if the column name entered exists
 		for (Column a : column_list_1) {
@@ -2281,7 +2254,7 @@ public class Project {
 	////// EXECUTION //////
 	///////////////////////////////////////////////////////////
 
-	public static void execute_create_database() {
+	private static void execute_create_database() {
 		// check to make sure that database doesn't already exist
 		File file = new File(Database.temp_database_name);
 		if (file.exists() && file.isFile()) {
@@ -2325,7 +2298,7 @@ public class Project {
 		}
 	}
 
-	public static void execute_drop_database() {
+	private static void execute_drop_database() {
 		// drop everything
 		if (Database.database_name != null) {
 			if (Database.temp_database_name.toLowerCase().equals(Database.database_name.toLowerCase())) {
@@ -2346,7 +2319,7 @@ public class Project {
 		}
 	}
 
-	public static void execute_save() throws FileNotFoundException, UnsupportedEncodingException {
+	private static void execute_save() throws FileNotFoundException, UnsupportedEncodingException {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2411,7 +2384,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_load_database() {
+	private static void execute_load_database() {
 		// can only do this command if we're working on an active database
 
 		// first of all, make sure the database we're loading isn't equivalent
@@ -2456,7 +2429,7 @@ public class Project {
 		Database.temp_database_name = null;
 	}
 
-	public static void execute_create_table() {
+	private static void execute_create_table() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2468,7 +2441,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_drop_table() {
+	private static void execute_drop_table() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2479,7 +2452,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_insert() {
+	private static void execute_insert() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2507,7 +2480,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_delete() {
+	private static void execute_delete() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2539,7 +2512,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_update() {
+	private static void execute_update() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2582,7 +2555,7 @@ public class Project {
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
 	}
 
-	public static void execute_select() {
+	private static void execute_select() {
 		if (Database.database_name != null) {
 			// can only do this command if we're working on an active database
 
@@ -2594,14 +2567,14 @@ public class Project {
 				temp10.add(get_column(table_name, a));
 
 			// display the column names
-			for (int i = 0; i < temp10.size(); i++) {
-				System.out.print(display(temp10.get(i).column_name, temp10.get(i)) + "  ");
+			for (Column aTemp10 : temp10) {
+				System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
 			}
 			// display the dividing line between columns and tuples
 			System.out.println("");
 			// display dashes
-			for (int i = 0; i < temp10.size(); i++) {
-				System.out.print(display_dashes(temp10.get(i)) + "  ");
+			for (Column aTemp10 : temp10) {
+				System.out.print(display_dashes(aTemp10) + "  ");
 			}
 			System.out.println("");
 
@@ -2610,29 +2583,28 @@ public class Project {
 			ArrayList<Record> r = (ArrayList<Record>) Database.tables.get(table_name).records.clone();
          
          // Apply Grouping clauses
-         for (int i = 0; i < groupColumns.size(); i++) {
-            int index = -1;
+			for (String groupColumn : groupColumns) {
+				int index = -1;
 				for (int j = 0; j < temp9.size(); j++) {
-               if(temp9.get(j).toString().toUpperCase().equals(groupColumns.get(i))){
-                  index = j;
-               }
-            }
-            
-            ArrayList<String> groups = new ArrayList<String>();
-            ArrayList<Record> moveToGroup = new ArrayList<Record>();
-            
-            for(Record record : r){
-               if(groups.contains(record.cells.get(index))){
-                  moveToGroup.add(record);
-               }
-               else{
-                  groups.add(record.cells.get(index));
-               }
-            }
-            
-            for(Record record : moveToGroup){
-               r.remove(record);
-            }
+					if (temp9.get(j).toUpperCase().equals(groupColumn)) {
+						index = j;
+					}
+				}
+
+				ArrayList<String> groups = new ArrayList<String>();
+				ArrayList<Record> moveToGroup = new ArrayList<Record>();
+
+				for (Record record : r) {
+					if (groups.contains(record.cells.get(index))) {
+						moveToGroup.add(record);
+					} else {
+						groups.add(record.cells.get(index));
+					}
+				}
+
+				for (Record record : moveToGroup) {
+					r.remove(record);
+				}
 
 			}
 
@@ -2640,29 +2612,29 @@ public class Project {
 			int c;
 			String d;
 			// loop through each record
-			for (int i = 0; i < r.size(); i++) {
+			for (Record aR : r) {
 				// we can only display the columns being displayed
 				// so we must loop through each column to display
 				d = "";
 
 				// only include the record if it qualified the WHERE clause
-				if (execute_where(r.get(i))) {
-					for (int j = 0; j < temp10.size(); j++) {
+				if (execute_where(aR)) {
+					for (Column aTemp10 : temp10) {
 						// get the index number of the column
-						c = get_column_index(temp10.get(j).column_name);
+						c = get_column_index(aTemp10.column_name);
 
 						// get the value to display
 						// strip out quotes at beginning and end if displaying a
 						// VARCHAR or CHAR
-						if (r.get(i).cells.get(c).equals("NULL"))
+						if (aR.cells.get(c).equals("NULL"))
 							d = "";
-						else if (temp10.get(j).column_type.equals("VARCHAR")
-								|| temp10.get(j).column_type.equals("CHAR"))
-							d = r.get(i).cells.get(c).substring(1, r.get(i).cells.get(c).length() - 1);
+						else if (aTemp10.column_type.equals("VARCHAR")
+								|| aTemp10.column_type.equals("CHAR"))
+							d = aR.cells.get(c).substring(1, aR.cells.get(c).length() - 1);
 						else
-							d = r.get(i).cells.get(c);
+							d = aR.cells.get(c);
 
-						d = display(d, temp10.get(j)) + "  ";
+						d = display(d, aTemp10) + "  ";
 
 						// display the cell
 						System.out.print(d);
@@ -2672,7 +2644,7 @@ public class Project {
 					// if we're in a wSELECT statement
 					// display the time at the end
 					if (tokens.get(0).value.equals("WSELECT")) {
-						System.out.print(" -> " + r.get(i).record_date);
+						System.out.print(" -> " + aR.record_date);
 					}
 
 					// display new line for next record
@@ -2685,7 +2657,7 @@ public class Project {
 	}
 
 	// checks if record qualifies
-	public static boolean execute_where(Record r) {
+	private static boolean execute_where(Record r) {
 
 		// qualify by default if there is no WHERE clause used
 		if (temp1.size() == 0) {
@@ -2696,8 +2668,8 @@ public class Project {
 			// evaluate the where clause
 
 			int c;
-			previous_condition = null;
-			current_condition = null;
+			Boolean previous_condition = null;
+			Boolean current_condition = null;
 			String temp_column_value, temp_literal_value, temp_operator;
 			Column col;
 			Float t_c_v, t_l_v;
@@ -2724,21 +2696,16 @@ public class Project {
 				if (temp6.get(i).column_type.equals("VARCHAR") || temp6.get(i).column_type.equals("CHAR")) {
 					// we're evaluating a string
 
-					if (temp_operator.equals("=")) {
-						if (temp_column_value.equals(temp_literal_value))
-							current_condition = true;
-						else
-							current_condition = false;
-					} else if (temp_operator.equals("<>")) {
-						if (!temp_column_value.equals(temp_literal_value))
-							current_condition = true;
-						else
-							current_condition = false;
-					} else if (temp_operator.equals("!=")) {
-						if (!temp_column_value.equals(temp_literal_value))
-							current_condition = true;
-						else
-							current_condition = false;
+					switch (temp_operator) {
+						case "=":
+							current_condition = temp_column_value.equals(temp_literal_value);
+							break;
+						case "<>":
+							current_condition = !temp_column_value.equals(temp_literal_value);
+							break;
+						case "!=":
+							current_condition = !temp_column_value.equals(temp_literal_value);
+							break;
 					}
 				} else {
 					// we're evaluating a number of some kind
@@ -2756,58 +2723,45 @@ public class Project {
 
 					// here is where we do the actual evaluation
 					if (t_c_v != null) {
-						if (temp_operator.equals("=")) {
-							if (t_c_v.equals(t_l_v))
-								current_condition = true;
-							else
-								current_condition = false;
-						} else if (temp_operator.equals("<>") || temp_operator.equals("!=")) {
-							if (!t_c_v.equals(t_l_v))
-								current_condition = true;
-							else
-								current_condition = false;
+						switch (temp_operator) {
+							case "=":
+								current_condition = t_c_v.equals(t_l_v);
+								break;
+							case "<>":
+							case "!=":
+								current_condition = !t_c_v.equals(t_l_v);
 
-						} else if (temp_operator.equals(">")) {
-							if (t_c_v > t_l_v)
-								current_condition = true;
-							else
-								current_condition = false;
-						} else if (temp_operator.equals(">=")) {
-							if (t_c_v >= t_l_v)
-								current_condition = true;
-							else
-								current_condition = false;
-						} else if (temp_operator.equals("<")) {
-							if (t_c_v < t_l_v)
-								current_condition = true;
-							else
-								current_condition = false;
-						} else if (temp_operator.equals("<=")) {
-							if (t_c_v <= t_l_v)
-								current_condition = true;
-							else
-								current_condition = false;
+								break;
+							case ">":
+								current_condition = t_c_v > t_l_v;
+								break;
+							case ">=":
+								current_condition = t_c_v >= t_l_v;
+								break;
+							case "<":
+								current_condition = t_c_v < t_l_v;
+								break;
+							case "<=":
+								current_condition = t_c_v <= t_l_v;
+								break;
 						}
 					} else {
 						// the row value is null
-						if (temp_operator.equals("=")) {
-							if (t_l_v == null)
-								current_condition = true;
-							else
+						switch (temp_operator) {
+							case "=":
+								current_condition = t_l_v == null;
+								break;
+							case "<>":
+								current_condition = t_l_v != null;
+								break;
+							case "!=":
+								current_condition = t_l_v != null;
+								break;
+							default:
+								// else, default NULL for all other operations
 								current_condition = false;
-						} else if (temp_operator.equals("<>")) {
-							if (t_l_v != null)
-								current_condition = true;
-							else
-								current_condition = false;
-						} else if (temp_operator.equals("!=")) {
-							if (t_l_v != null)
-								current_condition = true;
-							else
-								current_condition = false;
-						} else
-							// else, default NULL for all other operations
-							current_condition = false;
+								break;
+						}
 					}
 				}
 
@@ -2819,15 +2773,9 @@ public class Project {
 
 					// now depending on the AND/OR, we evaluate
 					if (condition_separator.equals("AND")) {
-						if (current_condition && previous_condition)
-							current_condition = true;
-						else
-							current_condition = false;
+						current_condition = current_condition && previous_condition;
 					} else if (condition_separator.equals("OR")) {
-						if (current_condition || previous_condition)
-							current_condition = true;
-						else
-							current_condition = false;
+						current_condition = current_condition || previous_condition;
 					}
 
 				}
@@ -2837,7 +2785,7 @@ public class Project {
 		}
 	}
 
-	public static void execute_list_tables() {
+	private static void execute_list_tables() {
 		// this command will display all tables in the database
 		Enumeration<String> e = Database.tables.keys();
 		String t;
@@ -2873,7 +2821,7 @@ public class Project {
 	}
 
 	// display formatting for SELECT command
-	public static String display(String it, Column c) {
+	private static String display(String it, Column c) {
 		String r = it;
 
 		int to_length = 0;
@@ -2906,7 +2854,7 @@ public class Project {
 	}
 
 	// display formatting for SELECT command
-	public static String display_dashes(Column c) {
+	private static String display_dashes(Column c) {
 		String r = "";
 
 		int to_length = 0;
@@ -2939,14 +2887,14 @@ public class Project {
 	}
 
 	// loads a database file from memory
-	public static int loadDB() {
+	private static int loadDB() {
 		File DB = new File(directory_to + Database.temp_database_name);
 		int failure = 1;
 		Scanner input_ = null;
 		Scanner line = null;
 		try {
 			input_ = new Scanner(DB);
-		} catch (FileNotFoundException ex) {
+		} catch (FileNotFoundException ignored) {
 		}
 		;
 
@@ -3003,25 +2951,25 @@ public class Project {
 }
 
 class Database {
-	public static String database_name = null;
-	public static String temp_database_name = null;
-	public static Hashtable<String, Table> tables = new Hashtable<String, Table>();
+	static String database_name = null;
+	static String temp_database_name = null;
+	static Hashtable<String, Table> tables = new Hashtable<String, Table>();
 }
 
 class Table {
-	public ArrayList<Column> columns = new ArrayList<Column>();
-	public ArrayList<Record> records = new ArrayList<Record>();
+	ArrayList<Column> columns = new ArrayList<Column>();
+	ArrayList<Record> records = new ArrayList<Record>();
 }
 
 class Column {
-	public String column_name;
-	public String column_type;
-	public int restriction;
-	public Integer restriction_2 = null;
-	public String is_null_allowed = "true";
+	String column_name;
+	String column_type;
+	int restriction;
+	Integer restriction_2 = null;
+	String is_null_allowed = "true";
 
 	// column constructor with decimal restriction
-	public Column(String name, String type, int restriction, int restriction_2, String is_null_allowed) {
+	Column(String name, String type, int restriction, int restriction_2, String is_null_allowed) {
 		this.column_name = name;
 		this.column_type = type;
 		this.restriction = restriction;
@@ -3039,17 +2987,17 @@ class Column {
 } //Column
 
 class Record {
-	public String record_date;
-	public ArrayList<String> cells = new ArrayList<String>();
+	String record_date;
+	ArrayList<String> cells = new ArrayList<String>();
 
 	// record constructor
-	public Record() {
+	Record() {
 		this.record_date = (new Date()).toString();
 	} //Record Constructor 
 
 	// constructor for loading database records
-	public Record(String date, ArrayList<String> tuples) {
-		record_date = (new Date()).toString();
+	Record(String date, ArrayList<String> tuples) {
+		record_date = date;
 		cells = tuples;
 	} //Record constructor
 
