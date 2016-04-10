@@ -1,10 +1,8 @@
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Pattern;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.HashSet;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -2335,8 +2333,7 @@ public class Project {
 				}
 			}
 
-			// create the file
-			// this will also overwrite the file
+			// create the file. This also overwrites the file
 			PrintWriter writer = new PrintWriter(directory_to + Database.database_name.toLowerCase(), "UTF-8");
 
 			// iterate through all tables
@@ -2345,15 +2342,10 @@ public class Project {
 			while (e.hasMoreElements()) {
 				t = e.nextElement();
 				writer.println(t); // name of the table
-				writer.println(Database.tables.get(t).columns.size()); // number
-																		// of
-																		// columns
-																		// in
-																		// the
-																		// table
+				writer.println(Database.tables.get(t).columns.size()); // number of columns in the table
+
 				for (int i = 0; i < Database.tables.get(t).columns.size(); i++) {
-					// iterate through each column
-					// write to file
+					// iterate through each column and write to file
 					writer.println(Database.tables.get(t).columns.get(i).column_name + DELIMITER
 							+ Database.tables.get(t).columns.get(i).column_type + DELIMITER
 							+ Database.tables.get(t).columns.get(i).restriction + DELIMITER
@@ -2361,15 +2353,12 @@ public class Project {
 							+ Database.tables.get(t).columns.get(i).is_null_allowed);
 				}
 				for (int i = 0; i < Database.tables.get(t).records.size(); i++) {
-					// iterate through each record
-					// write to file
+					// iterate through each record and write to file
 					String it = "";
 					it += Database.tables.get(t).records.get(i).record_date;
-					// now that we have the date
-					// we need to iterate through each cell
-					// and append to file
-					for (int j = 0; j < Database.tables.get(t).records.get(i).cells.size(); j++) {
-						it += DELIMITER + Database.tables.get(t).records.get(i).cells.get(j);
+					// now that we have the date, we will iterate through each cell and append to file
+					for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
+						it += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).cellValue.get(0);
 					}
 					// now we write it to file
 					writer.println(it);
@@ -2410,7 +2399,7 @@ public class Project {
 					Database.tables.clear();
 
 					// HERE IS WHERE WE DO EVERYTHING!
-					loadDB();
+					loadFromDatabase();
 					Database.database_name = Database.temp_database_name;
 					Database.temp_database_name = null;
 
@@ -2422,7 +2411,7 @@ public class Project {
 			} else {
 				// there is no current database loaded
 				// HERE IS WHERE WE DO EVERYTHING!
-				loadDB();
+				loadFromDatabase();
 				Database.database_name = Database.temp_database_name;
 			}
 		}
@@ -2465,15 +2454,15 @@ public class Project {
 			// iterate through all columns to insert
 			for (int i = 0; i < c; i++) {
 				// so now we're going to insert 1 cell per column in that table
-				Database.tables.get(table_name).records.get(Database.tables.get(table_name).records.size() - 1).cells
-						.add("NULL");
+				Database.tables.get(table_name).records.get(Database.tables.get(table_name).records.size() - 1).listofCells
+						.add(new Cell("NULL"));
 			}
 
 			// IF that column ends has a value specified in the SQL command
 			// overwrite the insert with the value
 			for (int i = 0; i < temp2.size(); i++) {
-				Database.tables.get(table_name).records.get(Database.tables.get(table_name).records.size() - 1).cells
-						.set(get_column_index(temp6.get(i).column_name), temp2.get(i));
+				Database.tables.get(table_name).records.get(Database.tables.get(table_name).records.size() - 1).listofCells
+						.set(get_column_index(temp6.get(i).column_name), new Cell(temp2.get(i)));
 			}
 
 		} else
@@ -2536,7 +2525,7 @@ public class Project {
 
 						// now that we have the index
 						// we literally update the record
-						Database.tables.get(table_name).records.get(i).cells.set(column_index, temp13.get(j));
+						Database.tables.get(table_name).records.get(i).listofCells.set(column_index, new Cell(temp13.get(j)));
 					}
 
 					// if it's a wUpdate command, update the date as well
@@ -2591,14 +2580,14 @@ public class Project {
 					}
 				}
 
-				ArrayList<String> groups = new ArrayList<String>();
-				ArrayList<Record> moveToGroup = new ArrayList<Record>();
+				ArrayList<String> groups = new ArrayList<>();
+				ArrayList<Record> moveToGroup = new ArrayList<>();
 
 				for (Record record : r) {
-					if (groups.contains(record.cells.get(index))) {
+					if (groups.contains(record.listofCells.get(index))) {
 						moveToGroup.add(record);
 					} else {
-						groups.add(record.cells.get(index));
+						groups.add(record.listofCells.get(index).cellValue.get(0));
 					}
 				}
 
@@ -2626,13 +2615,13 @@ public class Project {
 						// get the value to display
 						// strip out quotes at beginning and end if displaying a
 						// VARCHAR or CHAR
-						if (aR.cells.get(c).equals("NULL"))
+						if (aR.listofCells.get(c).equals("NULL"))
 							d = "";
 						else if (aTemp10.column_type.equals("VARCHAR")
 								|| aTemp10.column_type.equals("CHAR"))
-							d = aR.cells.get(c).substring(1, aR.cells.get(c).length() - 1);
+							d = aR.listofCells.get(c).cellValue.get(0).substring(1, aR.listofCells.get(c).cellValue.get(0).length() - 1);
 						else
-							d = aR.cells.get(c);
+							d = aR.listofCells.get(c).cellValue.get(0);
 
 						d = display(d, aTemp10) + "  ";
 
@@ -2687,7 +2676,7 @@ public class Project {
 				c = get_column_index(col.column_name);
 
 				// now we get the variables
-				temp_column_value = r.cells.get(c).toLowerCase();
+				temp_column_value = r.listofCells.get(c).cellValue.get(0).toLowerCase();
 				temp_literal_value = temp2.get(i).toLowerCase();
 				temp_operator = temp7.get(i);
 
@@ -2887,7 +2876,7 @@ public class Project {
 	}
 
 	// loads a database file from memory
-	private static int loadDB() {
+	private static int loadFromDatabase() {
 		File DB = new File(directory_to + Database.temp_database_name);
 		int failure = 1;
 		Scanner input_ = null;
@@ -2928,11 +2917,17 @@ public class Project {
 				line.useDelimiter(DELIMITER);
 
 				String dateString = line.next();
-				ArrayList<String> data = new ArrayList<String>();
+                DateFormat dFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy");
+                Date date;
+                try {
+                    date = dFormat.parse(dateString);
+                } catch (ParseException ignored) {
+                    date = new Date();
+                }
+                ArrayList<Cell> data = new ArrayList<>();
 				for (int i = 0; i < numCol; i++) {
 					String test = line.next();
-					// System.out.println(test);
-					data.add(test);
+					data.add(new Cell(test, date));
 				}
 
 				Record r = new Record(dateString, data);
@@ -2988,7 +2983,7 @@ class Column {
 
 class Record {
 	String record_date;
-	ArrayList<String> cells = new ArrayList<String>();
+	List<Cell> listofCells = new ArrayList<>();
 
 	// record constructor
 	Record() {
@@ -2996,24 +2991,41 @@ class Record {
 	} //Record Constructor 
 
 	// constructor for loading database records
-	Record(String date, ArrayList<String> tuples) {
+	Record(String date, ArrayList<Cell> tuples) {
 		record_date = date;
-		cells = tuples;
+		listofCells = tuples;
 	} //Record constructor
 
 	// toString
 	public String toString() {
-		if (this.cells.size() == 0)
+		if (this.listofCells.size() == 0)
 			return "";
 		else {
 			// enumerate through all items of the record, display them
 			String it = "";
-			for (int i = 0; i < this.cells.size(); i++) {
+			for (int i = 0; i < this.listofCells.size(); i++) {
 				if (i != 0)
 					it += ", ";
-				it += this.cells.get(i);
+				it += this.listofCells.get(i);
 			}
 			return it;
 		} //else
 	} //toString
-} // class Record 
+} // class Record
+
+//Cell Object
+class Cell{
+    List<String> cellValue = new ArrayList<>();
+	List<Date> dateUpdated = new ArrayList<>();
+
+    Cell(String v){
+        cellValue.add(v);
+        dateUpdated.add(new Date());
+    }
+
+//    A constructor with a date parameter, when loading from the database
+    Cell(String s, Date d){
+        cellValue.add(s);
+        dateUpdated.add(d);
+    }
+}
