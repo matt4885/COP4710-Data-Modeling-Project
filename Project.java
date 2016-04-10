@@ -14,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 
 public class Project {
 	// all the stuff needed for Project execution
-    private static ArrayList<String> groupColumns = new ArrayList<>();
+   private static ArrayList<String> groupColumns = new ArrayList<>();
 	private static boolean auto_input = false;
 	private static boolean display_debugger_stuff = false;
 	private static Scanner scanning = new Scanner(System.in);
@@ -915,7 +915,7 @@ public class Project {
 		}
       
       
-      //Check for grouping, else check for multiple grouping
+     //Check for grouping, else check for multiple grouping
       if (tokens.get(index).value.toUpperCase().equals("GROUP")){
 			index++;
          
@@ -925,6 +925,16 @@ public class Project {
          
          index++;
          
+          if (tokens.get(index).value.toUpperCase().equals("GROUPING")){
+             index++;
+             if (!tokens.get(index).value.toUpperCase().equals("SETS")){
+               parse_error.add(tokens.get(index).value + " is not valid; expecting SETS.");
+            }
+            
+            index++;
+         }
+
+         
          if (!tokens.get(index).value.toUpperCase().equals("(")){
             parse_error.add(tokens.get(index).value + " is not valid; expecting (.");
          }
@@ -933,35 +943,45 @@ public class Project {
          
          groupColumns.clear();
          
-         String column = tokens.get(index).value.toUpperCase();
-         boolean match = false;
-         index++;
+         boolean inGroup = true;
+         while(inGroup){
          
-         
-         //temp 9 holds all colunmn names
-		  for (String aTemp9 : temp9) {
-			  if (aTemp9.toString().toUpperCase().equals(column)) {
-				  match = true;
-			  }
-		  }
-         
-         if(match){
-            groupColumns.add(column);
-         }
-         else{
-            semantic_error.add("The column " + column + " does not exist in the current table.");
-
-         }
-
-         
+            String column = tokens.get(index).value.toUpperCase();
+            String comma = tokens.get(index + 1).value;
+            
+            boolean match = false;
+            index++;
+            
+            
+            //temp 9 holds all colunmn names
+            for (int i = 0; i < temp9.size(); i++){
+   					if(temp9.get(i).toString().toUpperCase().equals(column)){
+                     match = true;
+                  }
+            }
+            
+            if(match){
+               groupColumns.add(column);
+            }
+            else{
+               semantic_error.add("The column " + column + " does not exist in the current table.");
+   
+            }
+            
+            if(!comma.equals(",")){
+               inGroup = false;
+               
+            }
+            else{
+               index++;
+            }
+        }  
          if (!tokens.get(index).value.toUpperCase().equals(")")){
             parse_error.add(tokens.get(index).value + " is not valid; expecting ).");
          }
          else
             index++;
-      }
-      
-      
+      }  
       
 	}
 
@@ -2577,31 +2597,47 @@ public class Project {
 			@SuppressWarnings("unchecked")
 			ArrayList<Record> r = (ArrayList<Record>) Database.tables.get(table_name).records.clone();
          
+        ArrayList<Integer> colIndexes = new ArrayList<Integer>();
+
          // Apply Grouping clauses
-			for (String groupColumn : groupColumns) {
-				int index = -1;
+         for (int i = 0; i < groupColumns.size(); i++) {
+        
+            int index = -1;
 				for (int j = 0; j < temp9.size(); j++) {
-					if (temp9.get(j).toUpperCase().equals(groupColumn)) {
-						index = j;
-					}
-				}
+               if(temp9.get(j).toString().toUpperCase().equals(groupColumns.get(i))){
+                  colIndexes.add(j);
+               }
+            }
+         }    
+      
+         ArrayList<ArrayList<String>> groups = new ArrayList<ArrayList<String>>();
+         ArrayList<Record> moveToGroup = new ArrayList<Record>();
+         
+         if( colIndexes.size() > 0){
+            for(Record record : r){
+               
+              
+               ArrayList<String> currentValues = new ArrayList<String>();
+               
+               for(int i : colIndexes){
+                  currentValues.add(record.listofCells.get(i).cellValue.get(0));
+               }
+               
+               if(groups.contains(currentValues)){
+                  moveToGroup.add(record);
+               }
+               else{
+                  groups.add(currentValues);
+               }
+              
+            }
+         }
+         
+         for(Record record : moveToGroup){
+            r.remove(record);
+         }
 
-				ArrayList<String> groups = new ArrayList<>();
-				ArrayList<Record> moveToGroup = new ArrayList<>();
-
-				for (Record record : r) {
-					if (groups.contains(record.listofCells.get(index))) {
-						moveToGroup.add(record);
-					} else {
-						groups.add(record.listofCells.get(index).cellValue.get(0));
-					}
-				}
-
-				for (Record record : moveToGroup) {
-					r.remove(record);
-				}
-
-			}
+			groupColumns = new ArrayList<String>();
 
 			// now we're looking at the individual rows
 			int c;
