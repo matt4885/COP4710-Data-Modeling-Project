@@ -2663,7 +2663,7 @@ public class Project {
 								|| aTemp10.column_type.equals("CHAR"))
 							d = aR.listofCells.get(c).cellValue.get(0).substring(1, aR.listofCells.get(c).cellValue.get(0).length() - 1);
 						else
-							d = aR.listofCells.get(c).cellValue.get(0);
+							d = ((Cell) aR.listofCells.get(c)).cellValue.get(0);
 
 						d = display(d, aTemp10) + "  ";
 
@@ -3075,8 +3075,8 @@ class Record {
 
 //Cell Object
 class Cell{
-    List<String> cellValue = new LinkedList<>();
-	List<Date> dateUpdated = new LinkedList<>();
+   List<String> cellValue = new LinkedList<>();
+   List<Date> dateUpdated = new LinkedList<>();
 
 	Cell(){
 
