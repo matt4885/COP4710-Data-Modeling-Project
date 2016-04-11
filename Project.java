@@ -2366,6 +2366,8 @@ public class Project {
                 // now that we have the date, we will iterate through each cell and append to file
                 for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
                     recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).cellValue.get(0);
+					recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).dateUpdated.get(0);
+					recordStringToFile += DELIMITER + "%^&";
                 }
                 // now we write it to file
                 writer.println(recordStringToFile);
@@ -2928,13 +2930,31 @@ public class Project {
                 } catch (ParseException ignored) {
                     date = new Date();
                 }
-                ArrayList<Cell> data = new ArrayList<>();
+                ArrayList<Cell> CellList = new ArrayList<>();
 				for (int i = 0; i < numCol; i++) {
-					String test = line.next();
-					data.add(new Cell(test, date));
+//					Each iteration of the for loop will gather the data for each cell (which may consist of a list of updates)
+					Cell inProgressCell = new Cell();
+					while(true){
+//						if we're out of tokens, move to the next line
+						if(!line.hasNext()){
+							break;
+						}
+						String token = line.next();
+//						This random sequence, "%^&" will be used to delimit the end of a Cell
+						if(token.equals("%^&")){
+							break;
+						}
+						inProgressCell.cellValue.add(token);
+						try {
+							inProgressCell.dateUpdated.add(dFormat.parse(line.next()));
+						} catch (ParseException ignored) {
+//							this shouldn't ever happen
+						}
+					}
+					CellList.add(inProgressCell);
 				}
 
-				Record r = new Record(dateString, data);
+				Record r = new Record(dateString, CellList);
 				Database.tables.get(key).records.add(r);
 				line.close();
 			}
@@ -3021,6 +3041,10 @@ class Record {
 class Cell{
     List<String> cellValue = new LinkedList<>();
 	List<Date> dateUpdated = new LinkedList<>();
+
+	Cell(){
+
+	}
 
     Cell(String v){
         cellValue.add(v);
