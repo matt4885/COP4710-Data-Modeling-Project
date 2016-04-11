@@ -2318,8 +2318,8 @@ public class Project {
 	}
 
 	private static void execute_save() throws FileNotFoundException, UnsupportedEncodingException {
+		// can only do this command if we're working on an active database
 		if (Database.database_name != null) {
-			// can only do this command if we're working on an active database
 
 			// first we check if the database exists
 			File theDir = new File("databases");
@@ -2334,43 +2334,47 @@ public class Project {
 			}
 
 			// create the file. This also overwrites the file
-			PrintWriter writer = new PrintWriter(directory_to + Database.database_name.toLowerCase(), "UTF-8");
-
-			// iterate through all tables
-			Enumeration<String> e = Database.tables.keys();
-			String t;
-			while (e.hasMoreElements()) {
-				t = e.nextElement();
-				writer.println(t); // name of the table
-				writer.println(Database.tables.get(t).columns.size()); // number of columns in the table
-
-				for (int i = 0; i < Database.tables.get(t).columns.size(); i++) {
-					// iterate through each column and write to file
-					writer.println(Database.tables.get(t).columns.get(i).column_name + DELIMITER
-							+ Database.tables.get(t).columns.get(i).column_type + DELIMITER
-							+ Database.tables.get(t).columns.get(i).restriction + DELIMITER
-							+ Database.tables.get(t).columns.get(i).restriction_2 + DELIMITER
-							+ Database.tables.get(t).columns.get(i).is_null_allowed);
-				}
-				for (int i = 0; i < Database.tables.get(t).records.size(); i++) {
-					// iterate through each record and write to file
-					String it = "";
-					it += Database.tables.get(t).records.get(i).record_date;
-					// now that we have the date, we will iterate through each cell and append to file
-					for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
-						it += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).cellValue.get(0);
-					}
-					// now we write it to file
-					writer.println(it);
-				}
-				writer.println("");
-			}
-
-			// close out the file
-			writer.close();
+			saveToDatabase();
 
 		} else
 			System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
+	}
+
+	private static void saveToDatabase() throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(directory_to + Database.database_name.toLowerCase(), "UTF-8");
+
+		// iterate through all tables
+		Enumeration<String> e = Database.tables.keys();
+		String t;
+		while (e.hasMoreElements()) {
+            t = e.nextElement();
+            writer.println(t); // name of the table
+            writer.println(Database.tables.get(t).columns.size()); // number of columns in the table
+
+            for (int i = 0; i < Database.tables.get(t).columns.size(); i++) {
+                // iterate through each column and write to file
+                writer.println(Database.tables.get(t).columns.get(i).column_name + DELIMITER
+                        + Database.tables.get(t).columns.get(i).column_type + DELIMITER
+                        + Database.tables.get(t).columns.get(i).restriction + DELIMITER
+                        + Database.tables.get(t).columns.get(i).restriction_2 + DELIMITER
+                        + Database.tables.get(t).columns.get(i).is_null_allowed);
+            }
+            for (int i = 0; i < Database.tables.get(t).records.size(); i++) {
+                // iterate through each record and write to file
+                String recordStringToFile = "";
+                recordStringToFile += Database.tables.get(t).records.get(i).record_date;
+                // now that we have the date, we will iterate through each cell and append to file
+                for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
+                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).cellValue.get(0);
+                }
+                // now we write it to file
+                writer.println(recordStringToFile);
+            }
+            writer.println("");
+        }
+
+		// close out the file
+		writer.close();
 	}
 
 	private static void execute_load_database() {
@@ -3015,8 +3019,8 @@ class Record {
 
 //Cell Object
 class Cell{
-    List<String> cellValue = new ArrayList<>();
-	List<Date> dateUpdated = new ArrayList<>();
+    List<String> cellValue = new LinkedList<>();
+	List<Date> dateUpdated = new LinkedList<>();
 
     Cell(String v){
         cellValue.add(v);
