@@ -2385,8 +2385,8 @@ public class Project {
                 recordStringToFile += Database.tables.get(t).records.get(i).record_date;
                 // now that we have the date, we will iterate through each cell and append to file
                 for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
-                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).cellValue.get(0);
-					recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).dateUpdated.get(0);
+                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstValue();
+					recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstDate();
 					recordStringToFile += DELIMITER + "%^&";
                 }
                 // now we write it to file
@@ -2528,8 +2528,8 @@ public class Project {
 	}
 
 	private static void execute_update() {
+		// can only do this command if we're working on an active database
 		if (Database.database_name != null) {
-			// can only do this command if we're working on an active database
 
 			// get all the rows for the table
 			@SuppressWarnings("unchecked")
@@ -2546,19 +2546,28 @@ public class Project {
 				if (it) {
 					// loop through every column we're updating
 					for (int j = 0; j < temp13.size(); j++) {
+
+						String newCellValue =  temp13.get(j);
+
 						// get the column index that we're updating
 						column_index = get_column_index(temp12.get(j).column_name);
+						if(tokens.get(0).value.equals("UPDATE")){
 
-						// now that we have the index
-						// we literally update the record
-						Database.tables.get(table_name).records.get(i).listofCells.set(column_index, new Cell(temp13.get(j)));
+//							Get the current time for that record, so that the updated cell does not lose its date
+							Date tempDate = Database.tables.get(table_name).records.get(i).listofCells.get(column_index).getFirstDate();
+
+							// now that we have the index we literally update the record
+							Database.tables.get(table_name).records.get(i).listofCells.set(column_index, new Cell(newCellValue, tempDate));
+						}
+						else if (tokens.get(0).value.equals("WUPDATE")){
+							// if it's a wUpdate command, update the date of the record as well
+							Database.tables.get(table_name).records.get(i).record_date = (new Date()).toString();
+
+//							Update the designated cell by inserting the new update into the first position of the cell's fields (Lists)
+							Database.tables.get(table_name).records.get(i).listofCells.get(column_index).cellValue.addFirst(newCellValue);
+							Database.tables.get(table_name).records.get(i).listofCells.get(column_index).dateUpdated.addFirst(new Date());
+						}
 					}
-
-					// if it's a wUpdate command, update the date as well
-					if (tokens.get(0).value.equals("WUPDATE")) {
-						Database.tables.get(table_name).records.get(i).record_date = (new Date()).toString();
-					}
-
 					// increment the counter
 					counter++;
 				}
@@ -2620,7 +2629,7 @@ public class Project {
                ArrayList<String> currentValues = new ArrayList<String>();
                
                for(int i : colIndexes){
-                  currentValues.add(record.listofCells.get(i).cellValue.get(0));
+                  currentValues.add(record.listofCells.get(i).getFirstValue());
                }
                
                if(groups.contains(currentValues)){
@@ -2661,9 +2670,9 @@ public class Project {
 							d = "";
 						else if (aTemp10.column_type.equals("VARCHAR")
 								|| aTemp10.column_type.equals("CHAR"))
-							d = aR.listofCells.get(c).cellValue.get(0).substring(1, aR.listofCells.get(c).cellValue.get(0).length() - 1);
+							d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
 						else
-							d = ((Cell) aR.listofCells.get(c)).cellValue.get(0);
+							d = ((Cell) aR.listofCells.get(c)).getFirstValue();
 
 						d = display(d, aTemp10) + "  ";
 
@@ -2718,7 +2727,7 @@ public class Project {
 				c = get_column_index(col.column_name);
 
 				// now we get the variables
-				temp_column_value = r.listofCells.get(c).cellValue.get(0).toLowerCase();
+				temp_column_value = r.listofCells.get(c).getFirstValue().toLowerCase();
 				temp_literal_value = temp2.get(i).toLowerCase();
 				temp_operator = temp7.get(i);
 
@@ -3062,21 +3071,34 @@ class Record {
 			return "";
 		else {
 			// enumerate through all items of the record, display them
-			String it = "";
+			String out = "";
 			for (int i = 0; i < this.listofCells.size(); i++) {
 				if (i != 0)
-					it += ", ";
-				it += this.listofCells.get(i);
+					out += ", ";
+				out += this.listofCells.get(i);
 			}
-			return it;
+			return out;
 		} //else
-	} //toString
+	}
+
+//	public String toWSELECTString(){
+//		if (this.listofCells.size() == 0)
+//			return "";
+//		else {
+//			String out = "";
+//			for(int i = 0; i < this.li)
+//
+//			return out;
+//		}
+//	}
+
+
 } // class Record
 
 //Cell Object
 class Cell{
-   List<String> cellValue = new LinkedList<>();
-   List<Date> dateUpdated = new LinkedList<>();
+   LinkedList<String> cellValue = new LinkedList<>();
+   LinkedList<Date> dateUpdated = new LinkedList<>();
 
 	Cell(){
 
@@ -3092,4 +3114,12 @@ class Cell{
         cellValue.add(s);
         dateUpdated.add(d);
     }
+
+	Date getFirstDate(){
+		return dateUpdated.get(0);
+	}
+
+	String getFirstValue(){
+		return cellValue.get(0);
+	}
 }
