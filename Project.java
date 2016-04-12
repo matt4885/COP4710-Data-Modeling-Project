@@ -1524,6 +1524,18 @@ public class Project {
             parse_error.add(tokens.get(index).value + " is not valid; expecting a field type.");
     }
 
+    // parsing
+    private static void cube() {
+        //method stub for cube
+        //to be implemented once aggregate functions are implemented (or at least partially)
+    }
+
+    // parsing
+    private static void rollup() {
+        //method stub for rollup
+        //to be implemented once aggregate functions are implemented (or at least partially)
+    }
+
     // cleans string
     private static String clean(String input) {
         // replace all new lines with spaces
