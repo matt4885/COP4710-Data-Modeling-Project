@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 public class Project {
     private static final String DELIMITER = "##";
+    private static final String LISTDELIMITER = "^^^";
     // all the stuff needed for Project execution
     private static ArrayList<String> groupColumns = new ArrayList<>();
     private static boolean auto_input = false;
@@ -2388,9 +2389,14 @@ public class Project {
                 recordStringToFile += Database.tables.get(t).records.get(i).record_date;
                 // now that we have the date, we will iterate through each cell and append to file
                 for (int j = 0; j < Database.tables.get(t).records.get(i).listofCells.size(); j++) {
-                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstValue();
-                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstDate();
-                    recordStringToFile += DELIMITER + "%^&";
+                    Cell tempCell = Database.tables.get(t).records.get(i).listofCells.get(j);
+                    for(CellTuple ct : tempCell.cellTuples){
+                        recordStringToFile += DELIMITER + ct.value;
+                        recordStringToFile += DELIMITER + ct.date;
+                    }
+//                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstValue();
+//                    recordStringToFile += DELIMITER + Database.tables.get(t).records.get(i).listofCells.get(j).getFirstDate();
+                    recordStringToFile += DELIMITER + LISTDELIMITER;
                 }
                 // now we write it to file
                 writer.println(recordStringToFile);
@@ -2566,7 +2572,7 @@ public class Project {
                             Database.tables.get(table_name).records.get(i).record_date = (new Date()).toString();
 
 //							Update the designated cell by inserting the new update into the first position of the cell's fields (Lists)
-                            Database.tables.get(table_name).records.get(i).listofCells.get(column_index).cellTuples.add(new CellTuple(newCellValue, new Date()));
+                            Database.tables.get(table_name).records.get(i).listofCells.get(column_index).cellTuples.addFirst(new CellTuple(newCellValue, new Date()));
                         }
                     }
                     // increment the counter
@@ -2660,6 +2666,7 @@ public class Project {
                     // display the time at the end
                     if (tokens.get(0).value.equals("WSELECT")) {
                         System.out.print(" -> " + aR.record_date);
+                        printWSELECT(aR);
                     }
 
                     // display new line for next record
@@ -2699,40 +2706,35 @@ public class Project {
 
     private static void printWSELECT(Record aR) {
 //        TODO Work In Progress
-        int c;
-        String d;
-        for (Column aTemp10 : temp10) {
-            // get the index number of the column
-            c = get_column_index(aTemp10.column_name);
 
-            // get the value to display
-            // strip out quotes at beginning and end if displaying a
-            // VARCHAR or CHAR
-            if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
-                d = "";
-            else if (aTemp10.column_type.equals("VARCHAR")
-                    || aTemp10.column_type.equals("CHAR"))
-                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
-            else
-                d = ((Cell) aR.listofCells.get(c)).getFirstValue();
-
-            d = display(d, aTemp10) + "  ";
-
-            // display the cell
-            System.out.print(d);
-//            System.out.flush();
-        }
-
-
-        List<CellTuple> tempList = new ArrayList<>();
+//        List<CellTuple> tempList = new ArrayList<>();
 //			Enumerates through the list of cells, adding all previous updates to a List.
-        for (Cell currentCell : aR.listofCells) {
+        List<Cell> listofCells = aR.listofCells;
+        SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>();
+        for (int i = 0; i < listofCells.size(); i++) {
+            Cell currentCell = listofCells.get(i);
             if (currentCell.cellTuples.size() > 1) {
-//					Enumerates through the updates in Cell, adding to the tempList
+//					Enumerates through the updates in Cell, adding to the TreeMap
                 for (int j = 1; j < currentCell.cellTuples.size(); j++) {
-                    tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
+//                    tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
+                    mapOfCells.put(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date), i);
                 }
             }
+        }
+        if(mapOfCells.size()>0){
+            System.out.println();
+        }
+        for(CellTuple ct : mapOfCells.keySet()){
+            int position = mapOfCells.get(ct);
+            String value = ct.value;
+            for(int i = 0; i < listofCells.size(); i++){
+                if(i == position){
+                    System.out.print(value + "           ");
+                }else{
+                    System.out.print("           ");
+                }
+            }
+            System.out.println("    ->"+ ct.date.toString());
         }
 
 //			Sort the tempList by date
@@ -3036,8 +3038,7 @@ public class Project {
                             break;
                         }
                         String token = line.next();
-//						This random sequence, "%^&" will be used to delimit the end of a list of tuples
-                        if (token.equals("%^&")) {
+                        if (token.equals(LISTDELIMITER)) {
                             break;
                         }
                         inProgressTuple.value = token;
@@ -3141,7 +3142,7 @@ class Record {
 } // class Record
 
 //Cell Object
-class Cell {
+class Cell  {
     LinkedList<CellTuple> cellTuples = new LinkedList<>();
 
     Cell() {
@@ -3166,7 +3167,7 @@ class Cell {
     }
 }
 
-class CellTuple {
+class CellTuple implements Comparable<CellTuple>{
     String value;
     Date date;
 
@@ -3181,5 +3182,11 @@ class CellTuple {
     CellTuple(String s, Date d) {
         value = s;
         date = d;
+    }
+
+    @Override
+    public int compareTo(CellTuple o) {
+//        return this.date.compareTo(o.date);
+        return o.date.compareTo(this.date);
     }
 }
