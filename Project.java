@@ -2639,31 +2639,10 @@ public class Project {
             for (Record aR : r) {
                 // we can only display the columns being displayed
                 // so we must loop through each column to display
-                d = "";
 
                 // only include the record if it qualified the WHERE clause
                 if (execute_where(aR)) {
-                    for (Column aTemp10 : temp10) {
-                        // get the index number of the column
-                        c = get_column_index(aTemp10.column_name);
-
-                        // get the value to display
-                        // strip out quotes at beginning and end if displaying a
-                        // VARCHAR or CHAR
-                        if (aR.listofCells.get(c).equals("NULL"))
-                            d = "";
-                        else if (aTemp10.column_type.equals("VARCHAR")
-                                || aTemp10.column_type.equals("CHAR"))
-                            d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
-                        else
-                            d = ((Cell) aR.listofCells.get(c)).getFirstValue();
-
-                        d = display(d, aTemp10) + "  ";
-
-                        // display the cell
-                        System.out.print(d);
-                        System.out.flush();
-                    }
+                    printSELECT(aR);
 
                     // if we're in a wSELECT statement
                     // display the time at the end
@@ -2678,6 +2657,81 @@ public class Project {
 
         } else
             System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
+    }
+
+    private static void printSELECT(Record aR) {
+        int c;
+        String d;
+        for (Column aTemp10 : temp10) {
+            // get the index number of the column
+            c = get_column_index(aTemp10.column_name);
+
+            // get the value to display
+            // strip out quotes at beginning and end if displaying a
+            // VARCHAR or CHAR
+            if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
+                d = "";
+            else if (aTemp10.column_type.equals("VARCHAR")
+                    || aTemp10.column_type.equals("CHAR"))
+                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
+            else
+                d = aR.listofCells.get(c).getFirstValue();
+
+            d = display(d, aTemp10) + "  ";
+
+            // display the cell
+            System.out.print(d);
+//            System.out.flush();
+        }
+    }
+
+    private static void printWSELECT(Record aR) {
+//        TODO Work In Progress
+        int c;
+        String d;
+        for (Column aTemp10 : temp10) {
+            // get the index number of the column
+            c = get_column_index(aTemp10.column_name);
+
+            // get the value to display
+            // strip out quotes at beginning and end if displaying a
+            // VARCHAR or CHAR
+            if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
+                d = "";
+            else if (aTemp10.column_type.equals("VARCHAR")
+                    || aTemp10.column_type.equals("CHAR"))
+                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
+            else
+                d = ((Cell) aR.listofCells.get(c)).getFirstValue();
+
+            d = display(d, aTemp10) + "  ";
+
+            // display the cell
+            System.out.print(d);
+//            System.out.flush();
+        }
+
+
+        List<CellTuple> tempList = new ArrayList<>();
+//			Enumerates through the list of cells, adding all previous updates to a List.
+        for (Cell currentCell : aR.listofCells) {
+            if (currentCell.cellTuples.size() > 1) {
+//					Enumerates through the updates in Cell, adding to the tempList
+                for (int j = 1; j < currentCell.cellTuples.size(); j++) {
+                    tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
+                }
+            }
+        }
+
+//			Sort the tempList by date
+
+
+
+
+
+
+
+
     }
 
     // checks if record qualifies
@@ -3070,28 +3124,6 @@ class Record {
         } //else
     }
 
-    public String toWSELECTString() {
-        if (this.listofCells.size() == 0)
-            return "";
-        else {
-            String out = "";
-            List<CellTuple> tempList = new ArrayList<>();
-//			Enumerates through the list of cells, adding all previous updates to a List.
-            for (Cell currentCell : this.listofCells) {
-                if (currentCell.cellTuples.size() > 1) {
-//					Enumerates through the updates in Cell, adding to the tempList
-                    for (int j = 1; j < currentCell.cellTuples.size(); j++) {
-                        tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
-                    }
-                }
-            }
-
-//			Sort the tempList by date
-
-
-            return out;
-        }
-    }
 
 
 } // class Record
