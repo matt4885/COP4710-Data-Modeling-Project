@@ -42,6 +42,7 @@ public class Project {
     private static ArrayList<String> temp11 = new ArrayList<>();
     private static ArrayList<Column> temp12 = new ArrayList<>();
     private static ArrayList<String> temp13 = new ArrayList<>();
+    private static ArrayList<String> AggFunc = new ArrayList<>();
     private static boolean in_where;
     private static String table_name = "";
     private static String command = "";
@@ -143,6 +144,7 @@ public class Project {
                     System.out.println(temp11);
                     System.out.println(temp12);
                     System.out.println(temp13);
+                    System.out.println(AggFunc);
                 }
 
             }
@@ -809,8 +811,9 @@ public class Project {
         if (tokens.get(index).value.equals("*")) {
             index++;
         } else {
-            column_1();
-            column_2();
+            //call the aggregate functions
+            aggregate_1();
+            aggregate_2();
         }
 
         if (tokens.get(index).value.equals("FROM"))
@@ -1174,6 +1177,91 @@ public class Project {
             column_1();
 
             column_2();
+        }
+    }
+    
+    // parsing
+    private static void aggregate_1() {
+ 
+        if (tokens.get(index).type.equals("attribute")) {
+            AggFunc.add("NULL");
+            index++;
+
+            // SEMANTIC OPERATION
+
+            if (!command.equals("SELECT") && !command.equals("UPDATE")) {
+                // System.out.println("IN HERE!");
+                temp1.add(tokens.get(index - 1).value);
+            } else {
+                // System.out.println("IN HERE!");
+                if (in_where) {
+                    // System.out.println("IN TRUE!");
+                    temp1.add(tokens.get(index - 1).value);
+                } else {
+                    // System.out.println("IN FALSE!");
+                    temp9.add(tokens.get(index - 1).value);
+                }
+            }
+        } else if(tokens.get(index).type.equals("keyword")) {
+            switch(tokens.get(index).value){
+               case "SUM":
+                  AggFunc.add(tokens.get(index).value);
+                  index++;
+                  aggregate_function();
+                  break;
+               case "COUNT":
+                  AggFunc.add(tokens.get(index).value);
+                  index++;
+                  aggregate_function();
+                  break;
+               case "AVG":
+                  AggFunc.add(tokens.get(index).value);
+                  index++;
+                  aggregate_function();
+                  break;
+               case "MIN":
+                  AggFunc.add(tokens.get(index).value);
+                  index++;
+                  aggregate_function();
+                  break;
+               case "MAX":
+                  AggFunc.add(tokens.get(index).value);
+                  index++;
+                  aggregate_function();
+                  break;
+               default:
+                  parse_error.add(tokens.get(index).value + " is an invalid command.");
+            }
+        } else {
+            parse_error.add(tokens.get(index).value + " is not a column name.");
+        }
+    }
+
+    // parsing
+    private static void aggregate_2() {
+        if (tokens.get(index).value.equals(",")) {
+            index++;
+            aggregate_1();
+            aggregate_2();
+        }
+    }
+    
+    //parsing
+    private static void aggregate_function(){
+        if (tokens.get(index).value.equals("(")) {
+            index++;
+            if (tokens.get(index).value.equals("*")) {
+               index++;
+            } else {
+               column_1();
+            }
+            if (tokens.get(index).value.equals(")")) {
+               index++;
+            } else {
+               parse_error.add("Missing ')' after " + tokens.get(index - 1).value);
+            } 
+        } else {
+            parse_error.add("Missing '(' after " + tokens.get(index - 1).value);
         }
     }
 
@@ -1705,6 +1793,7 @@ public class Project {
         temp11.clear();
         temp12.clear();
         temp13.clear();
+        AggFunc.clear();
         in_where = false;
         table_name = "";
         command = "";
@@ -1831,7 +1920,9 @@ public class Project {
                 || input.equals("WHERE") || input.equals("SELECT") || input.equals("WSELECT") || input.equals("INTEGER")
                 || input.equals("NUMBER") || input.equals("CHAR") || input.equals("INT") || input.equals("VARCHAR")
                 || input.equals("CHARACTER") || input.equals("BIT") || input.equals("NOT") || input.equals("NULL")
-                || input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND");
+                || input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND")
+                || input.equals("COUNT") || input.equals("AVG") || input.equals("SUM") || input.equals("MIN") 
+                || input.equals("MAX");
 
     }
 
