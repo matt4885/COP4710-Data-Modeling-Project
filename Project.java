@@ -43,6 +43,7 @@ public class Project {
     private static ArrayList<Column> temp12 = new ArrayList<>();
     private static ArrayList<String> temp13 = new ArrayList<>();
     private static ArrayList<String> AggFunc = new ArrayList<>();
+    private static ArrayList<String> sumValues = new ArrayList<>();
     private static boolean in_where;
     private static String table_name = "";
     private static String command = "";
@@ -835,8 +836,10 @@ public class Project {
         // only if SELECT *
         if (!is_semantic_error()) {
             if (tokens.get(1).value.equals("*")) {
-                for (int i = 0; i < Database.tables.get(table_name).columns.size(); i++)
+                for (int i = 0; i < Database.tables.get(table_name).columns.size(); i++){
                     temp9.add(Database.tables.get(table_name).columns.get(i).column_name);
+                    AggFunc.add("NULL");
+                }
             } else {
                 // if not SELECT *
                 // then the user manually specified the columns
@@ -2746,6 +2749,12 @@ public class Project {
             String d;
             // loop through each record
             for (Record aR : r) {
+               if (execute_where(aR)) {
+                  execute_aggregate(aR);
+               }
+            }
+            
+            for (Record aR : r) {
                 // we can only display the columns being displayed
                 // so we must loop through each column to display
 
@@ -2771,27 +2780,51 @@ public class Project {
 
     private static void printSELECT(Record aR) {
         int c;
-        String d;
+        int l = 0;
+        String d = "";
+        int sumCounter = 0;
+              
         for (Column aTemp10 : temp10) {
             // get the index number of the column
             c = get_column_index(aTemp10.column_name);
-
+            
             // get the value to display
             // strip out quotes at beginning and end if displaying a
             // VARCHAR or CHAR
-            if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
-                d = "";
-            else if (aTemp10.column_type.equals("VARCHAR")
-                    || aTemp10.column_type.equals("CHAR"))
-                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
-            else
-                d = aR.listofCells.get(c).getFirstValue();
-
+            if(!AggFunc.get(l).equals("NULL")){
+               switch(AggFunc.get(c - 1)){
+                  case "SUM":
+                     d = sumValues.get(sumCounter);
+                     sumCounter++;
+                     break;
+                  case "COUNT":
+                    
+                     break;
+                  case "AVG":
+                     
+                     break;
+                  case "MIN":
+                     
+                     break;
+                  case "MAX":
+                    
+                     break;
+               }
+            } else {            
+               if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
+                   d = "";
+               else if (aTemp10.column_type.equals("VARCHAR")
+                       || aTemp10.column_type.equals("CHAR"))
+                   d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
+               else
+                   d = aR.listofCells.get(c).getFirstValue();
+            }
             d = display(d, aTemp10) + "  ";
 
             // display the cell
             System.out.print(d);
 //            System.out.flush();
+            l++;
         }
     }
 
@@ -2979,6 +3012,52 @@ public class Project {
             // return the condition result
             return current_condition;
         }
+    }
+    
+    private static void execute_aggregate(Record r){
+       int sumCounter = 0;
+       int countCounter = 0;
+       int avgCounter = 0;
+       int minCounter = 0;
+       int maxCounter = 0;
+       Column col;
+       int c;
+       
+       for (int i = 0; i < temp9.size(); i++) {
+          col = get_column(table_name, temp9.get(i));
+          c = get_column_index(col.column_name);
+          if(!AggFunc.get(i).equals("NULL")){
+             switch(AggFunc.get(i)){
+                case "SUM":
+                   execute_sum_function(r.listofCells.get(c).getFirstValue().toLowerCase(), sumCounter);
+                   sumCounter++;
+                   break;
+                case "COUNT":
+                  
+                   break;
+                case "AVG":
+                   
+                   break;
+                case "MIN":
+                   
+                   break;
+                case "MAX":
+                  
+                   break;
+             }
+          }
+       }
+    }
+    
+    private static void execute_sum_function(String val, int indx){
+         if(sumValues.size() > indx) {
+            int currval = Integer.parseInt(sumValues.get(indx));
+            currval = currval + Integer.parseInt(val);
+            sumValues.set(indx, Integer.toString(currval));
+         } else {
+            sumValues.add(val);
+         }
+         
     }
 
     private static void execute_list_tables() {
