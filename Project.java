@@ -38,7 +38,7 @@ public class Project {
     private static ArrayList<String> temp7 = new ArrayList<>();
     private static ArrayList<String> temp8 = new ArrayList<>();
     private static ArrayList<String> temp9 = new ArrayList<>();
-    private static ArrayList<Column> temp10 = new ArrayList<>();
+    private static ArrayList<Column> PotentiallyAListOfColumns = new ArrayList<>();
     private static ArrayList<String> temp11 = new ArrayList<>();
     private static ArrayList<Column> temp12 = new ArrayList<>();
     private static ArrayList<String> temp13 = new ArrayList<>();
@@ -141,7 +141,7 @@ public class Project {
                     System.out.println(temp7);
                     System.out.println(temp8);
                     System.out.println(temp9);
-                    System.out.println(temp10);
+                    System.out.println(PotentiallyAListOfColumns);
                     System.out.println(temp11);
                     System.out.println(temp12);
                     System.out.println(temp13);
@@ -1792,7 +1792,7 @@ public class Project {
         temp7.clear();
         temp8.clear();
         temp9.clear();
-        temp10.clear();
+        PotentiallyAListOfColumns.clear();
         temp11.clear();
         temp12.clear();
         temp13.clear();
@@ -2687,18 +2687,18 @@ public class Project {
             // dividing line
             System.out.println("");
 
-            // add all the columns to temp10
+            // add all the columns to PotentiallyAListOfColumns
             for (String a : temp9)
-                temp10.add(get_column(table_name, a));
+                PotentiallyAListOfColumns.add(get_column(table_name, a));
 
             // display the column names
-            for (Column aTemp10 : temp10) {
+            for (Column aTemp10 : PotentiallyAListOfColumns) {
                 System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
             }
             // display the dividing line between columns and tuples
             System.out.println("");
             // display dashes
-            for (Column aTemp10 : temp10) {
+            for (Column aTemp10 : PotentiallyAListOfColumns) {
                 System.out.print(display_dashes(aTemp10) + "  ");
             }
             System.out.println("");
@@ -2783,41 +2783,36 @@ public class Project {
         int l = 0;
         String d = "";
         int sumCounter = 0;
-              
-        for (Column aTemp10 : temp10) {
+
+        for (int i = 0; i < PotentiallyAListOfColumns.size(); i++) {
+            Column aTemp10 = PotentiallyAListOfColumns.get(i);
             // get the index number of the column
             c = get_column_index(aTemp10.column_name);
-            
+
             // get the value to display
             // strip out quotes at beginning and end if displaying a
             // VARCHAR or CHAR
-            if(!AggFunc.get(l).equals("NULL")){
-               switch(AggFunc.get(l)){
-                  case "SUM":
-                     d = sumValues.get(sumCounter);
-                     sumCounter++;
-                     break;
-                  case "COUNT":
-                    
-                     break;
-                  case "AVG":
-                     
-                     break;
-                  case "MIN":
-                     
-                     break;
-                  case "MAX":
-                    
-                     break;
-               }
-            } else {            
-               if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
-                   d = "";
-               else if (aTemp10.column_type.equals("VARCHAR")
-                       || aTemp10.column_type.equals("CHAR"))
-                   d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
-               else
-                   d = aR.listofCells.get(c).getFirstValue();
+            if (!AggFunc.get(l).equals("NULL")) {
+                switch (AggFunc.get(l)) {
+                    case "SUM":
+                        d = sumValues.get(sumCounter);
+                        sumCounter++;
+                        break;
+                    case "COUNT":
+
+                        break;
+                    case "AVG":
+
+                        break;
+                    case "MIN":
+
+                        break;
+                    case "MAX":
+
+                        break;
+                }
+            } else {
+                d = formatStringByColumnIndex(aR.listofCells.get(c).getFirstValue(), i);
             }
             d = display(d, aTemp10) + "  ";
 
@@ -2831,9 +2826,9 @@ public class Project {
     private static void printWSELECT(Record aR) {
 //        TODO Work In Progress
 
-//        List<CellTuple> tempList = new ArrayList<>();
 //			Enumerates through the list of cells, adding all previous updates to a TreeMap. The TreeMap sorts by date (most recent first), and allows the Tuple to be mapped to column
-        List<Cell> listofCells = aR.listofCells;
+        List<Cell> recordArgumentCellList = aR.listofCells;
+        Record tempRecord = new Record();
         SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>(new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
@@ -2849,44 +2844,86 @@ public class Project {
             }
         });
 //        Enumerates through the list of cells, getting WUPDATES.
-        for (int i = 0; i < listofCells.size(); i++) {
-            Cell currentCell = listofCells.get(i);
+        for (int i = 0; i < recordArgumentCellList.size(); i++) {
+            Cell currentCell = recordArgumentCellList.get(i);
             if (currentCell.cellTuples.size() > 1) {
 //					Enumerates through the updates in Cell, adding to the TreeMap. Index starts at 1, because 0 is the Current Value of the Cell
                 for (int j = 1; j < currentCell.cellTuples.size(); j++) {
-//                    tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
                     mapOfCells.put(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date), i);
                 }
             }
         }
-        if(mapOfCells.size()>0){
-            System.out.println();
+//        To look nice, we're going to try to display the original Record, if all of the original values have already been wupdated
+        if(mapOfCells.size() > recordArgumentCellList.size()){
+            CellTuple[] ctArray = mapOfCells.keySet().toArray(new CellTuple[mapOfCells.size()]);
+            Boolean equalFlag = true;
+
+            int n = ctArray.length - 1;
+
+            for(int i = 0; i < recordArgumentCellList.size() - 1; i++){
+                if(!(ctArray[n-i-1].date.equals(ctArray[n-i].date))){
+                    equalFlag = false;
+                }
+            }
+//            If equalFlag is true, then the last listofCells.size values have the same date, and could be considered the original Record
+            if(equalFlag){
+                for(int i = 0; i < recordArgumentCellList.size(); i++){
+//                    tempRecord.listofCells.add(new Cell().cellTuples.add(ctArray[n-i]));
+                    Cell temp = new Cell();
+                    temp.cellTuples.add(ctArray[n-i]);
+                    tempRecord.listofCells.add(temp);
+                    mapOfCells.remove(ctArray[n-i]);
+                }
+            }
         }
-//        Prints the updates
-        for(CellTuple ct : mapOfCells.keySet()){
-            String output = "";
+
+//        Prints the wupdates
+        if(mapOfCells.size() > 0) System.out.println();
+        for (CellTuple ct : mapOfCells.keySet()) {
+            String output;
+            String value = ct.value;
             int position = 0;
-            if(mapOfCells.containsKey(ct)){
+            if (mapOfCells.containsKey(ct)) {
                 position = mapOfCells.get(ct);
             }
-            String value = ct.value;
-            for(int i = 0; i < listofCells.size(); i++){
-                if(i == position){
-                    if(value.equals("NULL")){
-                        output = "";
-                    } else if (temp10.get(i).column_type.equals("VARCHAR") || temp10.get(i).column_type.equals("CHAR")){
-                        output = value.substring(1, value.length()-1);
-                    } else{
-                        output = value;
-                    }
-                }else{
+
+            for (int i = 0; i < recordArgumentCellList.size(); i++) {
+                if (i == position) {
+                    output = formatStringByColumnIndex(value, i);
+                } else {
                     output = "";
                 }
-                output = display(output, temp10.get(i)) + "  ";
+                output = display(output, PotentiallyAListOfColumns.get(i)) + "  ";
                 System.out.print(output);
             }
-            System.out.println(" -> "+ ct.date.toString());
+            System.out.println(" -> " + ct.date.toString());
         }
+        if(tempRecord.listofCells.size()>0){
+            String output;
+            for (int i = 0; i < recordArgumentCellList.size(); i++) {
+                String value = tempRecord.listofCells.get(i).getFirstValue();
+                output = formatStringByColumnIndex(value, i);
+                output = display(output, PotentiallyAListOfColumns.get(i)) + "  ";
+                System.out.print(output);
+            }
+            System.out.println(" -> " + tempRecord.listofCells.get(0).getFirstDate().toString());
+        }
+        if(mapOfCells.size() > 0){
+            for(int i = 0; i < recordArgumentCellList.size(); i++){
+                System.out.print(display_dashes(PotentiallyAListOfColumns.get(i)) + "-");
+            }
+        }
+    }
+
+    private static String formatStringByColumnIndex(String value, int i) {
+        String output;
+        if(value.equals("NULL"))
+            output = "";
+        else if (PotentiallyAListOfColumns.get(i).column_type.equals("VARCHAR") || PotentiallyAListOfColumns.get(i).column_type.equals("CHAR"))
+            output = value.substring(1, value.length()-1);
+        else
+            output = value;
+        return output;
     }
 
     // checks if record qualifies
