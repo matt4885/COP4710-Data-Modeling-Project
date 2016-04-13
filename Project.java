@@ -2872,11 +2872,15 @@ public class Project {
             String value = ct.value;
             for(int i = 0; i < listofCells.size(); i++){
                 if(i == position){
-                    output = value;
-//                    System.out.print(value + "           ");
+                    if(value.equals("NULL")){
+                        output = "";
+                    } else if (temp10.get(i).column_type.equals("VARCHAR") || temp10.get(i).column_type.equals("CHAR")){
+                        output = value.substring(1, value.length()-1);
+                    } else{
+                        output = value;
+                    }
                 }else{
                     output = "";
-//                    System.out.print("           ");
                 }
                 output = display(output, temp10.get(i)) + "  ";
                 System.out.print(output);
