@@ -2708,13 +2708,27 @@ public class Project {
 //        TODO Work In Progress
 
 //        List<CellTuple> tempList = new ArrayList<>();
-//			Enumerates through the list of cells, adding all previous updates to a List.
+//			Enumerates through the list of cells, adding all previous updates to a TreeMap. The TreeMap sorts by date (most recent first), and allows the Tuple to be mapped to column
         List<Cell> listofCells = aR.listofCells;
-        SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>();
+        SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>(new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                CellTuple c1 = (CellTuple) o1;
+                CellTuple c2 = (CellTuple) o2;
+                if(c1.date.equals(c2.date)){
+                    if(c1.value.equals(c2.value)){
+                        return 0;
+                    }
+                    return 1;
+                }
+                return c2.date.compareTo(c1.date);
+            }
+        });
+//        Enumerates through the list of cells, getting WUPDATES.
         for (int i = 0; i < listofCells.size(); i++) {
             Cell currentCell = listofCells.get(i);
             if (currentCell.cellTuples.size() > 1) {
-//					Enumerates through the updates in Cell, adding to the TreeMap
+//					Enumerates through the updates in Cell, adding to the TreeMap. Index starts at 1, because 0 is the Current Value of the Cell
                 for (int j = 1; j < currentCell.cellTuples.size(); j++) {
 //                    tempList.add(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date));
                     mapOfCells.put(new CellTuple(currentCell.cellTuples.get(j).value, currentCell.cellTuples.get(j).date), i);
@@ -2724,28 +2738,27 @@ public class Project {
         if(mapOfCells.size()>0){
             System.out.println();
         }
+//        Prints the updates
         for(CellTuple ct : mapOfCells.keySet()){
-            int position = mapOfCells.get(ct);
+            String output = "";
+            int position = 0;
+            if(mapOfCells.containsKey(ct)){
+                position = mapOfCells.get(ct);
+            }
             String value = ct.value;
             for(int i = 0; i < listofCells.size(); i++){
                 if(i == position){
-                    System.out.print(value + "           ");
+                    output = value;
+//                    System.out.print(value + "           ");
                 }else{
-                    System.out.print("           ");
+                    output = "";
+//                    System.out.print("           ");
                 }
+                output = display(output, temp10.get(i)) + "  ";
+                System.out.print(output);
             }
-            System.out.println("    ->"+ ct.date.toString());
+            System.out.println(" -> "+ ct.date.toString());
         }
-
-//			Sort the tempList by date
-
-
-
-
-
-
-
-
     }
 
     // checks if record qualifies
@@ -3167,7 +3180,7 @@ class Cell  {
     }
 }
 
-class CellTuple implements Comparable<CellTuple>{
+class CellTuple{
     String value;
     Date date;
 
@@ -3184,9 +3197,4 @@ class CellTuple implements Comparable<CellTuple>{
         date = d;
     }
 
-    @Override
-    public int compareTo(CellTuple o) {
-//        return this.date.compareTo(o.date);
-        return o.date.compareTo(this.date);
-    }
 }
