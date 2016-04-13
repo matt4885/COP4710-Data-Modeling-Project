@@ -2792,7 +2792,7 @@ public class Project {
             // strip out quotes at beginning and end if displaying a
             // VARCHAR or CHAR
             if(!AggFunc.get(l).equals("NULL")){
-               switch(AggFunc.get(c - 1)){
+               switch(AggFunc.get(l)){
                   case "SUM":
                      d = sumValues.get(sumCounter);
                      sumCounter++;
