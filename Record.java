@@ -3,16 +3,16 @@ import java.util.Date;
 import java.util.List;
 
 class Record {
-    String record_date;
+    Date record_date;
     List<Cell> listofCells = new ArrayList<>();
 
     // record constructor
     Record() {
-        this.record_date = (new Date()).toString();
+        this.record_date = (new Date());
     } //Record Constructor
 
     // constructor for loading database records
-    Record(String date, ArrayList<Cell> tuples) {
+    Record(Date date, ArrayList<Cell> tuples) {
         record_date = date;
         listofCells = tuples;
     } //Record constructor

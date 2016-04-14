@@ -59,7 +59,7 @@ public class Project {
     }
 
     public static void main(String[] args)
-            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, ParseException {
         System.out.println("Starting SQL Engine!\n");
 
         // loop forever
@@ -81,7 +81,7 @@ public class Project {
     }
 
     // process each command
-    private static void process() throws FileNotFoundException, UnsupportedEncodingException {
+    private static void process() throws FileNotFoundException, UnsupportedEncodingException, ParseException {
         String temp;
 
         // while there are commands
@@ -2663,7 +2663,7 @@ public class Project {
                             Database.tables.get(table_name).records.get(i).listofCells.set(column_index, new Cell(newCellValue, tempDate));
                         } else if (tokens.get(0).value.equals("WUPDATE")) {
                             // if it's a wUpdate command, update the date of the record as well
-                            Database.tables.get(table_name).records.get(i).record_date = (new Date()).toString();
+                            Database.tables.get(table_name).records.get(i).record_date = new Date();
 
 //							Update the designated cell by inserting the new update into the first position of the cell's fields (Lists)
                             Database.tables.get(table_name).records.get(i).listofCells.get(column_index).cellTuples.addFirst(new CellTuple(newCellValue, new Date()));
@@ -2680,7 +2680,7 @@ public class Project {
             System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
     }
 
-    private static void execute_select() {
+    private static void execute_select() throws ParseException {
         if (Database.database_name != null) {
             // can only do this command if we're working on an active database
 
@@ -2765,7 +2765,9 @@ public class Project {
                     // if we're in a wSELECT statement
                     // display the time at the end
                     if (tokens.get(0).value.equals("WSELECT")) {
-                        System.out.print(" -> " + aR.record_date);
+                        DateFormat dFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy");
+                        Date tempDate = aR.record_date;
+                        System.out.print(" updated " + formatDateToString(tempDate));
                         printWSELECT(aR);
                     }
 
@@ -2776,6 +2778,10 @@ public class Project {
 
         } else
             System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
+    }
+
+    private static String formatDateToString(Date tempDate) {
+        return new SimpleDateFormat("yyyy MMM dd hh:mm:ss a").format(tempDate);
     }
 
     private static void printSELECT(Record aR) {
@@ -2854,7 +2860,7 @@ public class Project {
             }
         }
 //        To look nice, we're going to try to display the original Record, if all of the original values have already been wupdated
-        if(mapOfCells.size() > recordArgumentCellList.size()){
+        if(mapOfCells.size() >= recordArgumentCellList.size()){
             CellTuple[] ctArray = mapOfCells.keySet().toArray(new CellTuple[mapOfCells.size()]);
             Boolean equalFlag = true;
 
@@ -2878,7 +2884,7 @@ public class Project {
         }
 
 //        Prints the wupdates
-        if(mapOfCells.size() > 0) System.out.println();
+        if(mapOfCells.size() > 0 || tempRecord.listofCells.size() > 0) System.out.println();
         for (CellTuple ct : mapOfCells.keySet()) {
             String output;
             String value = ct.value;
@@ -2896,7 +2902,7 @@ public class Project {
                 output = display(output, PotentiallyAListOfColumns.get(i)) + "  ";
                 System.out.print(output);
             }
-            System.out.println(" -> " + ct.date.toString());
+            System.out.println(" updated " + formatDateToString(ct.date));
         }
         if(tempRecord.listofCells.size()>0){
             String output;
@@ -2906,9 +2912,9 @@ public class Project {
                 output = display(output, PotentiallyAListOfColumns.get(i)) + "  ";
                 System.out.print(output);
             }
-            System.out.println(" -> " + tempRecord.listofCells.get(0).getFirstDate().toString());
+            System.out.println(" updated " + formatDateToString(tempRecord.listofCells.get(0).getFirstDate()));
         }
-        if(mapOfCells.size() > 0){
+        if(mapOfCells.size() > 0 || tempRecord.listofCells.size() > 0){
             for(int i = 0; i < recordArgumentCellList.size(); i++){
                 System.out.print(display_dashes(PotentiallyAListOfColumns.get(i)) + "-");
             }
@@ -3276,7 +3282,7 @@ public class Project {
                     CellList.add(inProgressCell);
                 }
 
-                Record r = new Record(dateString, CellList);
+                Record r = new Record(date, CellList);
                 Database.tables.get(key).records.add(r);
                 line.close();
             }
