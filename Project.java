@@ -18,8 +18,8 @@ public class Project {
     // all the stuff needed for Project execution
     private static ArrayList<String> groupColumns = new ArrayList<>();
     private static ArrayList<String> AggFunc = new ArrayList<>();
-    private static boolean auto_input = true;
-    private static boolean display_debugger_stuff = true;
+    private static boolean auto_input = false;
+    private static boolean display_debugger_stuff = false;
     private static Scanner scanning = new Scanner(System.in);
     private static String input = "";
     private static ArrayList<String> commands = new ArrayList<>();
@@ -872,7 +872,7 @@ public class Project {
                if(AggFunc.get(i).equals("SUM") || AggFunc.get(i).equals("AVG")){
                   for (int j = 0; j < Database.tables.get(table_name).columns.size(); j++){
                      if (Database.tables.get(table_name).columns.get(j).column_name.equals(temp9.get(i))){
-                        if(!Database.tables.get(table_name).columns.get(j).column_type.equals("INT")){
+                        if(!(Database.tables.get(table_name).columns.get(j).column_type.equals("INT") || Database.tables.get(table_name).columns.get(j).column_type.equals("NUMBER"))){
                            semantic_error.add("Cannot perform " + AggFunc.get(i) + " on a column of type "
                               + Database.tables.get(table_name).columns.get(j).column_type + ".");
                         }
@@ -3099,7 +3099,7 @@ public class Project {
     
     private static Record cloneRecord(Record r)
     {
-       Record n = new Record(r.record_date, new ArrayList<>());
+       Record n = new Record(r.record_date, new ArrayList<Cell>());
        if (r.listofCells.size() != 0){
             for (int i = 0; i < r.listofCells.size(); i++) {
                n.listofCells.add(new Cell(r.listofCells.get(i).getFirstValue(), r.listofCells.get(i).getFirstDate()));
@@ -3144,11 +3144,22 @@ public class Project {
     }
     
     private static String execute_sum_function(String val, String val2){
+        boolean isDouble = isDouble(val);
 
-       int currval = Integer.parseInt(val);
-       currval = currval + Integer.parseInt(val2);
-       return Integer.toString(currval);
+        if(!isDouble){
+            return Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2));
+        }else{
+            return Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
+        }
+    }
 
+    private static boolean isDouble(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     private static Cell execute_avg_function(Cell val, Cell val2){
