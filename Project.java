@@ -2580,6 +2580,9 @@ public class Project {
             for (int i = 0; i < temp1.size(); i++)
                 Database.tables.get(table_name).columns
                         .add(new Column(temp1.get(i), temp2.get(i), temp3.get(i), temp4.get(i), temp5.get(i)));
+
+            System.out.printf("Table %s created!\n", table_name);
+
         } else
             System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
     }
