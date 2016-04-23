@@ -17,8 +17,9 @@ public class Project {
     private static final String LISTDELIMITER = "^^^";
     // all the stuff needed for Project execution
     private static ArrayList<String> groupColumns = new ArrayList<>();
-    private static boolean auto_input = false;
-    private static boolean display_debugger_stuff = false;
+    private static ArrayList<String> AggFunc = new ArrayList<>();
+    private static boolean auto_input = true;
+    private static boolean display_debugger_stuff = true;
     private static Scanner scanning = new Scanner(System.in);
     private static String input = "";
     private static ArrayList<String> commands = new ArrayList<>();
@@ -42,8 +43,6 @@ public class Project {
     private static ArrayList<String> temp11 = new ArrayList<>();
     private static ArrayList<Column> temp12 = new ArrayList<>();
     private static ArrayList<String> temp13 = new ArrayList<>();
-    private static ArrayList<String> AggFunc = new ArrayList<>();
-    private static ArrayList<String> sumValues = new ArrayList<>();
     private static boolean in_where;
     private static String table_name = "";
     private static String command = "";
@@ -146,6 +145,7 @@ public class Project {
                     System.out.println(temp12);
                     System.out.println(temp13);
                     System.out.println(AggFunc);
+                    System.out.println(groupColumns);
                 }
 
             }
@@ -253,6 +253,20 @@ public class Project {
             select();
         } else
             parse_error.add(tokens.get(index).value + " is not a recognized command.");
+            
+        // SEMANTIC CHECK
+        // check for aggregate functions
+        // cannont have columns without aggregate functions
+        // without a group by statment. 
+        if(groupColumns.size() == 0){
+           if(AggFunc.contains("NULL")){
+               if(AggFunc.contains("SUM") || AggFunc.contains("AVG") || AggFunc.contains("MIN") ||
+                  AggFunc.contains("MAX") || AggFunc.contains("COUNT"))
+                  parse_error.add("Missing a GROUP BY statment");
+           }
+        }
+
+            
     }
 
     // parsing
@@ -850,6 +864,22 @@ public class Project {
                     }
                 }
             }
+            
+            // SEMANTIC CHECK
+            // cannot perform SUM or AVG operation on columns
+            // that are not of type INT.
+            for (int i = 0; i < temp9.size(); i++) {
+               if(AggFunc.get(i).equals("SUM") || AggFunc.get(i).equals("AVG")){
+                  for (int j = 0; j < Database.tables.get(table_name).columns.size(); j++){
+                     if (Database.tables.get(table_name).columns.get(j).column_name.equals(temp9.get(i))){
+                        if(!Database.tables.get(table_name).columns.get(j).column_type.equals("INT")){
+                           semantic_error.add("Cannot perform " + AggFunc.get(i) + " on a column of type "
+                              + Database.tables.get(table_name).columns.get(j).column_type + ".");
+                        }
+                     }
+                  }
+               }
+            }
         }
 
         if (tokens.get(index).value.equals("WHERE")) {
@@ -958,18 +988,15 @@ public class Project {
             boolean inGroup = true;
             while (inGroup) {
 
-                String column = tokens.get(index).value.toUpperCase();
+                String column = tokens.get(index).value;
                 String comma = tokens.get(index + 1).value;
 
                 boolean match = false;
                 index++;
 
 
-                //temp 9 holds all colunmn names
-                for (int i = 0; i < temp9.size(); i++) {
-                    if (temp9.get(i).toString().toUpperCase().equals(column)) {
-                        match = true;
-                    }
+                if (does_column_exist(table_name, column)) {
+                    match = true;
                 }
 
                 if (match) {
@@ -1152,7 +1179,8 @@ public class Project {
     private static void column_1() {
         if (tokens.get(index).type.equals("attribute")) {
             index++;
-
+            
+            
             // SEMANTIC OPERATION
 
             if (!command.equals("SELECT") && !command.equals("UPDATE")) {
@@ -1185,7 +1213,6 @@ public class Project {
     
     // parsing
     private static void aggregate_1() {
- 
         if (tokens.get(index).type.equals("attribute")) {
             AggFunc.add("NULL");
             index++;
@@ -1210,32 +1237,48 @@ public class Project {
                case "SUM":
                   AggFunc.add(tokens.get(index).value);
                   index++;
-                  aggregate_function();
                   break;
                case "COUNT":
                   AggFunc.add(tokens.get(index).value);
                   index++;
-                  aggregate_function();
                   break;
                case "AVG":
                   AggFunc.add(tokens.get(index).value);
                   index++;
-                  aggregate_function();
                   break;
                case "MIN":
                   AggFunc.add(tokens.get(index).value);
                   index++;
-                  aggregate_function();
                   break;
                case "MAX":
                   AggFunc.add(tokens.get(index).value);
                   index++;
-                  aggregate_function();
                   break;
                default:
                   parse_error.add(tokens.get(index).value + " is an invalid command.");
             }
-        } else {
+            
+            if (tokens.get(index).value.equals("(")) {
+               index++;
+               if (tokens.get(index).value.equals("*")) {
+                  index++;
+               } 
+               else{
+                  column_1();
+               }
+               if (tokens.get(index).value.equals(")")) {
+                  index++;
+               } 
+               else{
+                  parse_error.add("Missing ')' after " + tokens.get(index - 1).value);
+               } 
+            } 
+            else {
+            parse_error.add("Missing '(' after " + tokens.get(index - 1).value);
+            }
+        } 
+        else 
+        {
             parse_error.add(tokens.get(index).value + " is not a column name.");
         }
     }
@@ -1246,25 +1289,6 @@ public class Project {
             index++;
             aggregate_1();
             aggregate_2();
-        }
-    }
-    
-    //parsing
-    private static void aggregate_function(){
-        if (tokens.get(index).value.equals("(")) {
-            index++;
-            if (tokens.get(index).value.equals("*")) {
-               index++;
-            } else {
-               column_1();
-            }
-            if (tokens.get(index).value.equals(")")) {
-               index++;
-            } else {
-               parse_error.add("Missing ')' after " + tokens.get(index - 1).value);
-            } 
-        } else {
-            parse_error.add("Missing '(' after " + tokens.get(index - 1).value);
         }
     }
 
@@ -1653,7 +1677,7 @@ public class Project {
         print_thing();
 
         if (auto_input) {
-            input = "CREATE DATABASE oniel_testing;Create table s (col1 varchar(5) NOT NULL, col2 int(3) NOT NULL, col3 BIT);INSERT INTO s (col1, col2) VALUES ('Sam', 1);INSERT INTO s (col1, col2) VALUES ('Alex', 2);INSERT INTO s (col1, col2) VALUES ('Mark', 3);INSERT INTO s (col1, col2) VALUES ('Carl', 4);create table t (col1 int, col2 varchar);insert into t values (1, 'oniel');insert into t values (null, 'alex');insert into t values (3, 'nick');insert into t values (4, null);";
+            input = "CREATE DATABASE oniel_testing;Create table s (col1 varchar(5) NOT NULL, col2 int(3) NOT NULL, col3 int);INSERT INTO s (col1, col2, col3) VALUES ('Sam', 1, 5);INSERT INTO s (col1, col2, col3) VALUES ('Alex', 2, 5);INSERT INTO s (col1, col2, col3) VALUES ('Mark', 3, 4);INSERT INTO s (col1, col2, col3) VALUES ('Carl', 4, 1);create table t (col1 int, col2 varchar);insert into t values (1, 'oniel');insert into t values (null, 'alex');insert into t values (3, 'nick');insert into t values (4, null);";
             auto_input = false;
         } else
             // get the input from the console
@@ -2681,6 +2705,7 @@ public class Project {
     }
 
     private static void execute_select() throws ParseException {
+
         if (Database.database_name != null) {
             // can only do this command if we're working on an active database
 
@@ -2711,31 +2736,63 @@ public class Project {
 
             // Apply Grouping clauses
             for (int i = 0; i < groupColumns.size(); i++) {
-                for (int j = 0; j < temp9.size(); j++) {
-                    if (temp9.get(j).toUpperCase().equals(groupColumns.get(i))) {
-                        colIndexes.add(j);
-                    }
-                }
+                Column col = get_column(table_name, groupColumns.get(i));
+                int c = get_column_index(col.column_name);
+                colIndexes.add(c);
             }
 
             ArrayList<ArrayList<String>> groups = new ArrayList<>();
             ArrayList<Record> moveToGroup = new ArrayList<>();
+            
 
             if (colIndexes.size() > 0) {
                 for (Record record : r) {
                     ArrayList<String> currentValues = new ArrayList<>();
-
+                    Record rec = null;
+                    
                     for (int i : colIndexes) {
                         currentValues.add(record.listofCells.get(i).getFirstValue());
                     }
 
                     if (groups.contains(currentValues)) {
                         moveToGroup.add(record);
+                        for(int j = 0; j < groups.size(); j++){
+                           if(groups.get(j).equals(currentValues)){
+                              rec = cloneRecord(r.get(j));
+                              r.set(j , execute_aggregate(rec, record));
+                           }
+                        }
                     } else {
                         groups.add(currentValues);
                     }
 
                 }
+            } else if(AggFunc.contains("SUM") || AggFunc.contains("AVG") || AggFunc.contains("MIN") ||
+                  AggFunc.contains("MAX") || AggFunc.contains("COUNT")) {
+               int j = 0;
+               Record rec = null;
+               
+               for (Record record : r) {
+                  if (execute_where(record)) {
+                     rec = cloneRecord(record);
+                     moveToGroup.add(record);
+                     r.add(rec);
+                     break;
+                  }
+                  moveToGroup.add(record);
+                  j++;
+               }
+               
+               if(rec != null){
+                  for(int i = j + 1; i < r.size(); i++){
+                     if(rec != r.get(i)){
+                        if (execute_where(r.get(i))) {
+                           rec = execute_aggregate(rec, r.get(i));
+                        }
+                        moveToGroup.add(r.get(i));
+                     }
+                  }
+               }
             }
 
             for (Record record : moveToGroup) {
@@ -2747,13 +2804,8 @@ public class Project {
             // now we're looking at the individual rows
             int c;
             String d;
-            // loop through each record
-            for (Record aR : r) {
-               if (execute_where(aR)) {
-                  execute_aggregate(aR);
-               }
-            }
             
+            // loop through each record
             for (Record aR : r) {
                 // we can only display the columns being displayed
                 // so we must loop through each column to display
@@ -2786,9 +2838,8 @@ public class Project {
 
     private static void printSELECT(Record aR) {
         int c;
-        int l = 0;
         String d = "";
-        int sumCounter = 0;
+
 
         for (int i = 0; i < PotentiallyAListOfColumns.size(); i++) {
             Column aTemp10 = PotentiallyAListOfColumns.get(i);
@@ -2798,34 +2849,19 @@ public class Project {
             // get the value to display
             // strip out quotes at beginning and end if displaying a
             // VARCHAR or CHAR
-            if (!AggFunc.get(l).equals("NULL")) {
-                switch (AggFunc.get(l)) {
-                    case "SUM":
-                        d = sumValues.get(sumCounter);
-                        sumCounter++;
-                        break;
-                    case "COUNT":
+            if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
+                d = "";
+            else if (aTemp10.column_type.equals("VARCHAR")
+                    || aTemp10.column_type.equals("CHAR"))
+                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
+            else
+                d = aR.listofCells.get(c).getFirstValue();
 
-                        break;
-                    case "AVG":
-
-                        break;
-                    case "MIN":
-
-                        break;
-                    case "MAX":
-
-                        break;
-                }
-            } else {
-                d = formatStringByColumnIndex(aR.listofCells.get(c).getFirstValue(), i);
-            }
             d = display(d, aTemp10) + "  ";
 
             // display the cell
             System.out.print(d);
 //            System.out.flush();
-            l++;
         }
     }
 
@@ -3061,12 +3097,19 @@ public class Project {
         }
     }
     
-    private static void execute_aggregate(Record r){
-       int sumCounter = 0;
-       int countCounter = 0;
-       int avgCounter = 0;
-       int minCounter = 0;
-       int maxCounter = 0;
+    private static Record cloneRecord(Record r)
+    {
+       Record n = new Record(r.record_date, new ArrayList<>());
+       if (r.listofCells.size() != 0){
+            for (int i = 0; i < r.listofCells.size(); i++) {
+               n.listofCells.add(new Cell(r.listofCells.get(i).getFirstValue(), r.listofCells.get(i).getFirstDate()));
+            }
+        }
+        
+       return n;
+    }
+    
+    private static Record execute_aggregate(Record r , Record r2){
        Column col;
        int c;
        
@@ -3076,14 +3119,16 @@ public class Project {
           if(!AggFunc.get(i).equals("NULL")){
              switch(AggFunc.get(i)){
                 case "SUM":
-                   execute_sum_function(r.listofCells.get(c).getFirstValue().toLowerCase(), sumCounter);
-                   sumCounter++;
+                   r.listofCells.get(c).cellTuples.get(0).value = execute_sum_function(
+                              r.listofCells.get(c).getFirstValue().toLowerCase(), 
+                              r2.listofCells.get(c).getFirstValue().toLowerCase());
                    break;
                 case "COUNT":
                   
                    break;
                 case "AVG":
-                   
+                   r.listofCells.set(c, execute_avg_function(
+                              r.listofCells.get(c), r2.listofCells.get(c)));
                    break;
                 case "MIN":
                    
@@ -3094,17 +3139,40 @@ public class Project {
              }
           }
        }
+       
+       return r;
     }
     
-    private static void execute_sum_function(String val, int indx){
-         if(sumValues.size() > indx) {
-            int currval = Integer.parseInt(sumValues.get(indx));
-            currval = currval + Integer.parseInt(val);
-            sumValues.set(indx, Integer.toString(currval));
-         } else {
-            sumValues.add(val);
-         }
-         
+    private static String execute_sum_function(String val, String val2){
+
+       int currval = Integer.parseInt(val);
+       currval = currval + Integer.parseInt(val2);
+       return Integer.toString(currval);
+
+    }
+    
+    private static Cell execute_avg_function(Cell val, Cell val2){
+       int total = 0;
+       int count = 0;
+       double avg = 0;
+       
+       if(val.cellTuples.size() > 1){
+          val.cellTuples.add(new CellTuple(val2.getFirstValue(), val2.getFirstDate()));
+       }
+       else {
+          val.cellTuples.add(new CellTuple(val.getFirstValue(), val.getFirstDate()));
+          val.cellTuples.add(new CellTuple(val2.getFirstValue(), val2.getFirstDate()));
+       }
+       
+       for(int i = 1; i < val.cellTuples.size(); i++){
+          count++;
+          total = total + Integer.parseInt(val.cellTuples.get(i).value);
+       }
+       avg = total/count;
+       
+       val.cellTuples.get(0).value = Double.toString(avg);
+       
+       return val;
     }
 
     private static void execute_list_tables() {

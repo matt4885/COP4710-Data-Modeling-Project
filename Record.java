@@ -12,7 +12,7 @@ class Record {
     } //Record Constructor
 
     // constructor for loading database records
-    Record(Date date, ArrayList<Cell> tuples) {
+    Record(Date date, List<Cell> tuples) {
         record_date = date;
         listofCells = tuples;
     } //Record constructor
