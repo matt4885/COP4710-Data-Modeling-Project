@@ -2566,6 +2566,7 @@ public class Project {
                 // HERE IS WHERE WE DO EVERYTHING!
                 loadFromDatabase();
                 Database.database_name = Database.temp_database_name;
+                System.out.println("Database loaded successfully!");
             }
         }
         Database.temp_database_name = null;
@@ -3144,13 +3145,7 @@ public class Project {
     }
     
     private static String execute_sum_function(String val, String val2){
-        boolean isDouble = isDouble(val);
-
-        if(!isDouble){
-            return Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2));
-        }else{
-            return Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
-        }
+        return !isDouble(val) ? Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2)) : Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
     }
 
     private static boolean isDouble(String str) {
