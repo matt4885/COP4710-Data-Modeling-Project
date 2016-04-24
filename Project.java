@@ -1692,7 +1692,11 @@ public class Project {
         print_thing();
 
         if (auto_input) {
-            input = "CREATE DATABASE oniel_testing;Create table s (col1 varchar(5) NOT NULL, col2 int(3) NOT NULL, col3 int);INSERT INTO s (col1, col2, col3) VALUES ('Sam', 1, 5);INSERT INTO s (col1, col2, col3) VALUES ('Alex', 2, 5);INSERT INTO s (col1, col2, col3) VALUES ('Mark', 3, 4);INSERT INTO s (col1, col2, col3) VALUES ('Carl', 4, 1);create table t (col1 int, col2 varchar);insert into t values (1, 'oniel');insert into t values (null, 'alex');insert into t values (3, 'nick');insert into t values (4, null);";
+            input = "CREATE DATABASE Jack-Database;";
+            input = input + "Create table S (SNO varchar(2) NOT NULL, SNAME varchar(50), QUOTA int, CITY varchar(20));INSERT INTO S (SNO, SNAME, QUOTA, CITY) VALUES ('S1', 'Job', 4000, 'Dallas');INSERT INTO S (SNO, SNAME, QUOTA, CITY) VALUES ('S2', 'Baker', 20000, 'Chicago');INSERT INTO S (SNO, SNAME, QUOTA, CITY) VALUES ('S3', 'Kirby', 6000, 'Phoenix');INSERT INTO S (SNO, SNAME, QUOTA, CITY) VALUES ('S4', 'Sims', 3000, 'San Diego');INSERT INTO S (SNO, SNAME, QUOTA, CITY) VALUES ('S5', 'Jones', 30000, 'New York');";
+            input = input + "Create table P (PNO varchar(2) NOT NULL, PNAME varchar(50), COST Number, AVLQTY int);insert into P values ('P1', 'Modem', 350.00, 100);Insert into P values ('P2', 'Monitor', 400.00, 45);insert into P values ('P3', 'Printer', 700.00, 15);insert into P values ('P4', 'CPU Cards', 2500.00, 10);insert into P values ('P5', 'Disk Unit', 700.00, 25);insert into P values ('P6', 'Tape Drive', 1200.00, 27);";
+            input = input + "Create table SP (SNO varchar(2) NOT NULL, PNO varchar(2) NOT NULL, QTY Number);insert into SP values ('S1', 'P1', 300);insert into SP values ('S1', 'P2', 200);insert into SP values ('S2', 'P1', 300);insert into SP values ('S2', 'P2', 400);insert into SP values ('S3', 'P2', 200);insert into SP values ('S4', 'P2', 200);";
+            
             auto_input = false;
         } else
             // get the input from the console
@@ -1964,7 +1968,8 @@ public class Project {
                 || input.equals("CHARACTER") || input.equals("BIT") || input.equals("NOT") || input.equals("NULL")
                 || input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND")
                 || input.equals("COUNT") || input.equals("AVG") || input.equals("AVERAGE") || input.equals("SUM") 
-                || input.equals("MIN") || input.equals("MINIMUM") || input.equals("MAX") || input.equals("MAXIMUM");
+                || input.equals("MIN") || input.equals("MINIMUM") || input.equals("MAX") || input.equals("MAXIMUM")
+                || input.equals("CUBE") || input.equals("ROLLUP");
 
     }
 
@@ -2759,6 +2764,7 @@ public class Project {
 
             ArrayList<ArrayList<String>> groups = new ArrayList<>();
             ArrayList<Record> moveToGroup = new ArrayList<>();
+            ArrayList<Record> forAggFunc = new ArrayList<>();
             
 
             if (colIndexes.size() > 0) {
@@ -2774,11 +2780,14 @@ public class Project {
                         moveToGroup.add(record);
                         for(int j = 0; j < groups.size(); j++){
                            if(groups.get(j).equals(currentValues)){
-                              rec = cloneRecord(r.get(j));
-                              r.set(j , execute_aggregate(rec, record));
+                              rec = cloneRecord(forAggFunc.get(j));
+                              r.set(r.indexOf(forAggFunc.get(j)), execute_aggregate(rec, record));
+                              forAggFunc.set(j, rec);
+                              break;
                            }
                         }
                     } else {
+                        forAggFunc.add(record);
                         groups.add(currentValues);
                     }
 
@@ -2871,7 +2880,7 @@ public class Project {
             {
                 try
                 {
-                  if(!isDouble(aR.listofCells.get(c).getFirstValue()))
+                  if(!isNumeric(aR.listofCells.get(c).getFirstValue()))
                   {
                      Integer.parseInt(aR.listofCells.get(c).getFirstValue());
                      d = aR.listofCells.get(c).getFirstValue();
@@ -3176,18 +3185,17 @@ public class Project {
     }
     
     private static String execute_sum_function(String val, String val2){
-        boolean isDouble = isDouble(val);
 
-        if(!isDouble){
+        if(isInteger(val)){
             return Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2));
         }else{
             return Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
         }
     }
     
-    private static boolean isDouble(String str) {
+    private static boolean isInteger(String str) {
         try {
-            Double.parseDouble(str);
+            Integer.parseInt(str);
             return true;
         } catch (NumberFormatException e) {
             return false;
@@ -3243,7 +3251,7 @@ public class Project {
        
        for(int i = 1; i < val.cellTuples.size(); i++){
           count++;
-          if(isDouble(val.cellTuples.get(i).value))
+          if(isNumeric(val.cellTuples.get(i).value))
           {
             total = total + Integer.parseInt(val.cellTuples.get(i).value);
           } 
