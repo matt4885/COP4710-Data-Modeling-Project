@@ -1245,12 +1245,24 @@ public class Project {
                   index++;
                   countCounter=1;
                   break;
+               case "AVERAGE":
+                  AggFunc.add("AVG");
+                  index++;
+                  break;
                case "AVG":
                   AggFunc.add(tokens.get(index).value);
                   index++;
                   break;
+               case "MINIMUM":
+                  AggFunc.add("MIN");
+                  index++;
+                  break;
                case "MIN":
                   AggFunc.add(tokens.get(index).value);
+                  index++;
+                  break;
+               case "MAXIMUM":
+                  AggFunc.add("MAX");
                   index++;
                   break;
                case "MAX":
@@ -1951,8 +1963,8 @@ public class Project {
                 || input.equals("NUMBER") || input.equals("CHAR") || input.equals("INT") || input.equals("VARCHAR")
                 || input.equals("CHARACTER") || input.equals("BIT") || input.equals("NOT") || input.equals("NULL")
                 || input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND")
-                || input.equals("COUNT") || input.equals("AVG") || input.equals("SUM") || input.equals("MIN") 
-                || input.equals("MAX");
+                || input.equals("COUNT") || input.equals("AVG") || input.equals("AVERAGE") || input.equals("SUM") 
+                || input.equals("MIN") || input.equals("MINIMUM") || input.equals("MAX") || input.equals("MAXIMUM");
 
     }
 
@@ -2854,11 +2866,26 @@ public class Project {
             // VARCHAR or CHAR
             if (aR.listofCells.get(c).getFirstValue().equals("NULL"))
                 d = "";
-            else if (aTemp10.column_type.equals("VARCHAR")
-                    || aTemp10.column_type.equals("CHAR"))
-                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length()-1);
-            else
-                d = aR.listofCells.get(c).getFirstValue();
+            else 
+            {
+                try
+                {
+                  if(!isDouble(aR.listofCells.get(c).getFirstValue()))
+                  {
+                     Integer.parseInt(aR.listofCells.get(c).getFirstValue());
+                     d = aR.listofCells.get(c).getFirstValue();
+                  }
+                  else
+                  {
+                     Double.parseDouble(aR.listofCells.get(c).getFirstValue());
+                     d = aR.listofCells.get(c).getFirstValue();
+                  }
+                }
+                catch(Exception e)
+                {
+                  d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length()-1);
+                }
+            }
 
             d = display(d, aTemp10) + "  ";
 
@@ -3203,7 +3230,7 @@ public class Project {
     }
     
     private static Cell execute_avg_function(Cell val, Cell val2){
-       int total = 0;
+       double total = 0;
        int count = 0;
        double avg = 0;
        
@@ -3217,7 +3244,14 @@ public class Project {
        
        for(int i = 1; i < val.cellTuples.size(); i++){
           count++;
-          total = total + Integer.parseInt(val.cellTuples.get(i).value);
+          if(isDouble(val.cellTuples.get(i).value))
+          {
+            total = total + Integer.parseInt(val.cellTuples.get(i).value);
+          } 
+          else
+          {
+            total = total + Double.parseDouble(val.cellTuples.get(i).value);
+          }
        }
        avg = total/count;
        
