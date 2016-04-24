@@ -2902,14 +2902,17 @@ public class Project {
 //			Enumerates through the list of cells, adding all previous updates to a TreeMap. The TreeMap sorts by date (most recent first), and allows the Tuple to be mapped to column
         List<Cell> recordArgumentCellList = aR.listofCells;
         Record tempRecord = new Record();
-        SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>((Comparator<? super CellTuple>) (o1, o2) -> {
-            if(o1.date.equals(o2.date)){
-                if(o1.value.equals(o2.value)){
-                    return 0;
+        SortedMap<CellTuple, Integer> mapOfCells = new TreeMap<>(new Comparator<CellTuple>() {
+            @Override
+            public int compare(CellTuple o1, CellTuple o2) {
+                if (o1.date.equals(o2.date)) {
+                    if (o1.value.equals(o2.value)) {
+                        return 0;
+                    }
+                    return 1;
                 }
-                return 1;
+                return o2.date.compareTo(o1.date);
             }
-            return o2.date.compareTo(o1.date);
         });
 //        Enumerates through the list of cells, getting WUPDATES.
         for (int i = 0; i < recordArgumentCellList.size(); i++) {
