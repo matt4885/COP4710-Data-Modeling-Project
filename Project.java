@@ -3124,11 +3124,13 @@ public class Project {
              switch(AggFunc.get(i)){
                 case "SUM":
                    r.listofCells.get(c).cellTuples.get(0).value = execute_sum_function(
-                              r.listofCells.get(c).getFirstValue().toLowerCase(), 
-                              r2.listofCells.get(c).getFirstValue().toLowerCase());
+                              r.listofCells.get(c).getFirstValue(), 
+                              r2.listofCells.get(c).getFirstValue());
                    break;
                 case "COUNT":
-                  
+                    r.listofCells.get(c).cellTuples.get(0).value = execute_count_function(
+                            r.listofCells.get(c).getFirstValue(), 
+                            r2.listofCells.get(c).getFirstValue());                  
                    break;
                 case "AVG":
                    r.listofCells.set(c, execute_avg_function(
@@ -3151,6 +3153,18 @@ public class Project {
         return !isDouble(val) ? Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2)) : Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
     }
 
+    private static String execute_count_function(String val, String val2){
+    	
+    	int countCounter = Integer.parseInt(val);
+    	
+    	if(val2 != null){
+    		countCounter++;
+    	}
+    	
+    	return Integer.toString(countCounter);
+    }
+    
+    
     private static boolean isDouble(String str) {
         try {
             Double.parseDouble(str);
