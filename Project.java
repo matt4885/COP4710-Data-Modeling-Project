@@ -2581,6 +2581,7 @@ public class Project {
                 // HERE IS WHERE WE DO EVERYTHING!
                 loadFromDatabase();
                 Database.database_name = Database.temp_database_name;
+                System.out.println("Database loaded successfully!");
             }
         }
         Database.temp_database_name = null;
