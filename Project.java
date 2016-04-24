@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 
 //Group A1
 //COP 4710 - Data Modeling
@@ -22,6 +23,7 @@ public class Project {
     private static boolean display_debugger_stuff = false;
     private static Scanner scanning = new Scanner(System.in);
     private static String input = "";
+    public static int countCounter=0;
     private static ArrayList<String> commands = new ArrayList<>();
     private static boolean quotes = false;
     private static ArrayList<Project> tokens = new ArrayList<>();
@@ -1216,7 +1218,7 @@ public class Project {
         if (tokens.get(index).type.equals("attribute")) {
             AggFunc.add("NULL");
             index++;
-
+           
             // SEMANTIC OPERATION
 
             if (!command.equals("SELECT") && !command.equals("UPDATE")) {
@@ -1241,6 +1243,7 @@ public class Project {
                case "COUNT":
                   AggFunc.add(tokens.get(index).value);
                   index++;
+                  countCounter=1;
                   break;
                case "AVG":
                   AggFunc.add(tokens.get(index).value);
@@ -2566,7 +2569,6 @@ public class Project {
                 // HERE IS WHERE WE DO EVERYTHING!
                 loadFromDatabase();
                 Database.database_name = Database.temp_database_name;
-                System.out.println("Database loaded successfully!");
             }
         }
         Database.temp_database_name = null;
@@ -2580,9 +2582,6 @@ public class Project {
             for (int i = 0; i < temp1.size(); i++)
                 Database.tables.get(table_name).columns
                         .add(new Column(temp1.get(i), temp2.get(i), temp3.get(i), temp4.get(i), temp5.get(i)));
-
-            System.out.printf("Table %s created!\n", table_name);
-
         } else
             System.out.println("You are not working in an active database; please CREATE or LOAD a database.");
     }
@@ -2857,7 +2856,7 @@ public class Project {
                 d = "";
             else if (aTemp10.column_type.equals("VARCHAR")
                     || aTemp10.column_type.equals("CHAR"))
-                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length() - 1);
+                d = aR.listofCells.get(c).getFirstValue().substring(1, aR.listofCells.get(c).getFirstValue().length()-1);
             else
                 d = aR.listofCells.get(c).getFirstValue();
 
@@ -3112,11 +3111,10 @@ public class Project {
         
        return n;
     }
-    
+
     private static Record execute_aggregate(Record r , Record r2){
        Column col;
        int c;
-       
        for (int i = 0; i < temp9.size(); i++) {
           col = get_column(table_name, temp9.get(i));
           c = get_column_index(col.column_name);
@@ -3128,19 +3126,21 @@ public class Project {
                               r2.listofCells.get(c).getFirstValue());
                    break;
                 case "COUNT":
-                    r.listofCells.get(c).cellTuples.get(0).value = execute_count_function(
-                            r.listofCells.get(c).getFirstValue(), 
-                            r2.listofCells.get(c).getFirstValue());                  
+                    r.listofCells.get(c).cellTuples.get(0).value = execute_count_function(); 
                    break;
                 case "AVG":
                    r.listofCells.set(c, execute_avg_function(
                               r.listofCells.get(c), r2.listofCells.get(c)));
                    break;
                 case "MIN":
-                   
+                    r.listofCells.get(c).cellTuples.get(0).value = execute_min_function(
+                            r.listofCells.get(c).getFirstValue(), 
+                            r2.listofCells.get(c).getFirstValue());                    
                    break;
                 case "MAX":
-                  
+                    r.listofCells.get(c).cellTuples.get(0).value = execute_max_function(
+                            r.listofCells.get(c).getFirstValue(), 
+                            r2.listofCells.get(c).getFirstValue());                   
                    break;
              }
           }
@@ -3150,20 +3150,14 @@ public class Project {
     }
     
     private static String execute_sum_function(String val, String val2){
-        return !isDouble(val) ? Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2)) : Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
-    }
+        boolean isDouble = isDouble(val);
 
-    private static String execute_count_function(String val, String val2){
-    	
-    	int countCounter = Integer.parseInt(val);
-    	
-    	if(val2 != null){
-    		countCounter++;
-    	}
-    	
-    	return Integer.toString(countCounter);
+        if(!isDouble){
+            return Integer.toString(Integer.parseInt(val) + Integer.parseInt(val2));
+        }else{
+            return Float.toString(Float.parseFloat(val) + Float.parseFloat(val2));
+        }
     }
-    
     
     private static boolean isDouble(String str) {
         try {
@@ -3172,6 +3166,40 @@ public class Project {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+    private static boolean isNumeric(String str) {
+        try {
+            double d = Double.parseDouble(str);
+        } catch (NumberFormatException e) {
+            return false;
+        }return true;
+    }
+  
+    public static String execute_count_function(){
+     	countCounter++;
+    	return Integer.toString(countCounter);
+    }
+    
+    
+    private static String execute_min_function(String val, String val2){
+ 
+         	String minVal=val;
+        	int result=val.compareTo(val2);
+        	
+        	if(result>=0){
+        		minVal=val2;}
+         
+    		return minVal;   
+    }
+
+    private static String execute_max_function(String val, String val2){
+    	String maxVal=val;
+    	int result=val.compareTo(val2);
+    	if(result<=0){
+    		maxVal=val2;
+    	}
+    	
+		return maxVal; 	
     }
     
     private static Cell execute_avg_function(Cell val, Cell val2){
