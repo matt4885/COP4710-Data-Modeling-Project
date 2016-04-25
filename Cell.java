@@ -1,6 +1,11 @@
 import java.util.Date;
 import java.util.LinkedList;
 
+//Cell class
+//This cell class was extended to support a Date() object 
+//This date object allows for WUPDATE/WSELECT implemetation
+//In addition, this class implements a Cell tuple via way 
+//of LinkedList. 
 class Cell  {
     LinkedList<CellTuple> cellTuples = new LinkedList<>();
 
