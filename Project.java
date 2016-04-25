@@ -3004,6 +3004,7 @@ public class Project {
                      fr.addAll(execute_group_functions(r, colIndexes));
                   break;
                case "ROLLUP":
+                  @SuppressWarnings("unchecked")
                   ArrayList<Integer> colmns = (ArrayList<Integer>) colIndexes.clone();
                   for(int i = groupColumns.size(); i > -1; i--)
                   {
