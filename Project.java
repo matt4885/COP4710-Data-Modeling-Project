@@ -18,9 +18,11 @@ public class Project {
     private static final String LISTDELIMITER = "^^^";
     // all the stuff needed for Project execution
     private static ArrayList<String> groupColumns = new ArrayList<>();
+    private static ArrayList<ArrayList<String>> groupingSets = new ArrayList<>();
     private static ArrayList<String> AggFunc = new ArrayList<>();
-    private static boolean auto_input = false;
-    private static boolean display_debugger_stuff = false;
+    private static String groupType;
+    private static boolean auto_input = true;
+    private static boolean display_debugger_stuff = true;
     private static Scanner scanning = new Scanner(System.in);
     private static String input = "";
     public static int countCounter=0;
@@ -45,7 +47,14 @@ public class Project {
     private static ArrayList<String> temp11 = new ArrayList<>();
     private static ArrayList<Column> temp12 = new ArrayList<>();
     private static ArrayList<String> temp13 = new ArrayList<>();
+    private static ArrayList<String> having_clmn = new ArrayList<>();
+    private static ArrayList<Column> having_clmn_type = new ArrayList<>();
+    private static ArrayList<String> having_oper = new ArrayList<>();
+    private static ArrayList<String> having_val = new ArrayList<>();
+    private static ArrayList<String> having_sep = new ArrayList<>();
+    private static ArrayList<String> asClmn_name = new ArrayList<>();
     private static boolean in_where;
+    private static boolean in_having;
     private static String table_name = "";
     private static String command = "";
     ////////////////////////////////////////////////////////
@@ -148,6 +157,12 @@ public class Project {
                     System.out.println(temp13);
                     System.out.println(AggFunc);
                     System.out.println(groupColumns);
+                    System.out.println(having_clmn);
+                    System.out.println(having_clmn_type);
+                    System.out.println(having_oper);
+                    System.out.println(having_val);
+                    System.out.println(having_sep);
+                    System.out.println(asClmn_name);
                 }
 
             }
@@ -260,7 +275,7 @@ public class Project {
         // check for aggregate functions
         // cannont have columns without aggregate functions
         // without a group by statment. 
-        if(groupColumns.size() == 0){
+        if(groupColumns.size() == 0 && groupingSets.size() == 0){
            if(AggFunc.contains("NULL")){
                if(AggFunc.contains("SUM") || AggFunc.contains("AVG") || AggFunc.contains("MIN") ||
                   AggFunc.contains("MAX") || AggFunc.contains("COUNT"))
@@ -807,7 +822,9 @@ public class Project {
                     temp2.add(tokens.get(index - 1).value);
                 else
                     temp13.add(tokens.get(index - 1).value);
-            } else
+            } else if (in_having)
+                    having_val.add(tokens.get(index - 1).value);
+              else
                 temp2.add(tokens.get(index - 1).value);
 
         } else
@@ -958,8 +975,12 @@ public class Project {
             }
 
         }
-
-
+        group_by_functions();
+    }
+    
+    //parsing
+    private static void group_by_functions(){
+    
         //Check for grouping, else check for multiple grouping
         if (tokens.get(index).value.toUpperCase().equals("GROUP")) {
             index++;
@@ -967,62 +988,233 @@ public class Project {
             if (!tokens.get(index).value.toUpperCase().equals("BY")) {
                 parse_error.add(tokens.get(index).value + " is not valid; expecting BY.");
             }
-
+            
             index++;
-
-            if (tokens.get(index).value.toUpperCase().equals("GROUPING")) {
-                index++;
-                if (!tokens.get(index).value.toUpperCase().equals("SETS")) {
-                    parse_error.add(tokens.get(index).value + " is not valid; expecting SETS.");
-                }
-
-                index++;
-            }
-
-
-            if (!tokens.get(index).value.toUpperCase().equals("(")) {
-                parse_error.add(tokens.get(index).value + " is not valid; expecting (.");
-            } else
-                index++;
-
-            groupColumns.clear();
-
-            boolean inGroup = true;
-            while (inGroup) {
-
-                String column = tokens.get(index).value;
-                String comma = tokens.get(index + 1).value;
-
-                boolean match = false;
-                index++;
-
-
-                if (does_column_exist(table_name, column)) {
-                    match = true;
-                }
-
-                if (match) {
-                    groupColumns.add(column);
-                } else {
-                    semantic_error.add("The column " + column + " does not exist in the current table.");
-
-                }
-
-                if (!comma.equals(",")) {
-                    inGroup = false;
-
-                } else {
-                    index++;
-                }
-            }
-            if (!tokens.get(index).value.toUpperCase().equals(")")) {
-                parse_error.add(tokens.get(index).value + " is not valid; expecting ).");
-            } else
-                index++;
+            
+            switch(tokens.get(index).value)
+            {
+               case "GROUPING":
+                  index++;
+                  if (!tokens.get(index).value.toUpperCase().equals("SETS")) {
+                      parse_error.add(tokens.get(index).value + " is not valid; expecting SETS.");
+                  }
+                  groupType = "GROUPING SETS";
+                  index++;
+                  grouping_sets();
+                  break;
+               case "CUBE":
+                  groupType = "CUBE";
+                  index++;
+                  rollup_cube();
+                  break;
+               case "ROLLUP":
+                  groupType = "ROLLUP";
+                  index++;
+                  rollup_cube();
+                  break;
+               case "(":
+                  groupType = "GROUP BY";
+                  index++;
+                  group_by();
+                  if(tokens.get(index).value.equals("HAVING")){
+                     index++;
+                     in_having = true;
+                     having();
+                     in_having = false;
+                  }
+                  break;
+               default:
+                  parse_error.add(tokens.get(index).value + " is not valid; expecting (.");
+                  break;
+            } 
         }
-
     }
+    
+    // parsing
+    private static void group_by(){
+         while (!tokens.get(index).value.equals(")")) {
+            String column = tokens.get(index).value;
+            if (does_column_exist(table_name, column)) {
+               index++;
+               groupColumns.add(column);
+                       
+               if (tokens.get(index).value.equals(",")) {
+                   index++;
+               } else if(!tokens.get(index).value.equals(")")){
+                  parse_error.add("Expecting ) before " + tokens.get(index).value + ".");
+                  break;
+               }
+            } else
+                semantic_error.add("The column " + column + " does not exist in the current table.");
+         }
+         
+         index++;
+    }
+    
+    // parsing
+    private static void grouping_sets(){
+       if (tokens.get(index).value.equals("(")) {
+           index++;
+           while (!tokens.get(index).value.equals(")")) 
+           {
+               if (tokens.get(index).value.equals("(")) 
+               {
+                  ArrayList<String> set = new ArrayList<>();
+                  index++;
+                  while(!tokens.get(index).value.equals(")"))
+                  {
+                     String column = tokens.get(index).value;
+                     if (does_column_exist(table_name, column)) {
+                        index++;
+                        set.add(column);
+                                
+                        if (tokens.get(index).value.equals(",")) {
+                            index++;
+                        } else if(!tokens.get(index).value.equals(")")){
+                           parse_error.add("Expecting ) before " + tokens.get(index).value + ".");
+                           break;
+                        }
+                     } else
+                         semantic_error.add("The column " + column + " does not exist in the current table.");
+                  }
+                  groupingSets.add(set);
+                  index++;
+                  if (tokens.get(index).value.equals(",")) {
+                      index++;
+                  } else if(!tokens.get(index).value.equals(")")){
+                     parse_error.add("Expecting ) before " + tokens.get(index).value + ".");
+                     break;
+                  }
+               } else
+                  parse_error.add("Expecting ( before " + tokens.get(index).value + ".");
+            }
+            index++;
+       } else
+           parse_error.add("Expecting ( before " + tokens.get(index).value + ".");
+           
+       //SEMANTIC CHECK
+       //check if there is a column
+       //with the SUM aggregate function
+       if(!AggFunc.contains("SUM")){
+            parse_error.add("Missing aggregate function (SUM).");
+       }
+    }
+    
+    // parsing
+    private static void rollup_cube() {
+       if (tokens.get(index).value.equals("(")) {
+          index++;
+          while (!tokens.get(index).value.equals(")")) {
+             String column = tokens.get(index).value;
+             if (does_column_exist(table_name, column)) {
+                index++;
+                groupColumns.add(column);
+                        
+                if (tokens.get(index).value.equals(",")) {
+                    index++;
+                } else if(!tokens.get(index).value.equals(")")){
+                   parse_error.add("Expecting ) before " + tokens.get(index).value + ".");
+                   break;
+                }
+             } else
+                semantic_error.add("The column " + column + " does not exist in the current table.");
+          }
+         
+          index++;
 
+       } else
+           parse_error.add("Expecting ( before " + tokens.get(index).value + ".");
+           
+       //SEMANTIC CHECK
+       //check if there is a column
+       //with the SUM aggregate function
+       if(!AggFunc.contains("SUM")){
+            parse_error.add("Missing aggregate function (SUM).");
+       }
+    }
+    
+    // parsing
+    private static void having() {
+        condition_1();
+        condition_2();
+
+        // if we are doing a NULL comparison on the where clause
+        // we need to make sure the operator is either =, != or <>
+        for (int i = 0; i < having_val.size(); i++) {
+            if (having_val.get(i).equals("NULL")) {
+                if (!having_oper.get(i).equals("<>") && !having_oper.get(i).equals("!=") && !having_oper.get(i).equals("="))
+                    semantic_error.add("The relational operator " + having_oper.get(i) + " cannot be used with NULL values.");
+            }
+        }
+        
+         // SEMANTIC CHECK
+         // at this point, all the column names were inserted into having_clmn
+         // we need to make sure all those columns actually exist
+         if (!is_semantic_error() && !is_parse_error()) {
+             for (String a : having_clmn) {
+                 if (!does_column_exist(table_name, a))
+                     semantic_error.add("The column " + a + " does not exist in the table " + table_name + ".");
+                 else
+                     // add it to the temp list of columns
+                     having_clmn_type.add(get_column(table_name, a));
+             }
+   
+         }
+   
+         // SEMANTIC CHECK
+         // at this point, all the column names were inserted into having_clmn
+         // all the values were inserted into having_val
+         // all the relational operators were inserted into having_oper
+         // we need to make sure that if we're doing a BIT, it has to be of
+         // values either 0, 1 or NULL
+         if (!is_semantic_error() && !is_parse_error()) {
+             // only do this check if there are no current semantic errors
+             for (int i = 0; i < having_clmn_type.size(); i++) {
+                 if (having_clmn_type.get(i).column_type.equals("BIT")) {
+                     if (!having_val.get(i).equals("0") && !having_val.get(i).equals("1") && !having_val.get(i).equals("NULL")) {
+   
+                         String error_message = "The value " + having_val.get(i) + " is not compatible with the "
+                                 + having_clmn_type.get(i).column_name + " column; the column is of type BIT.";
+                         semantic_error.add(error_message);
+                     }
+                 }
+             }
+         }
+   
+         // SEMANTIC CHECK
+         // at this point, all the column names were inserted into having_clmn
+         // all the values were inserted into having_val
+         // all the relational operators were inserted into having_oper
+         // we need to make sure all the columns and values are compatible
+         if (!is_semantic_error() && !is_parse_error()) {
+             // only do this check if there are no current semantic errors
+             for (int i = 0; i < having_clmn_type.size(); i++) {
+                 if (!are_we_compatible(get_type(having_val.get(i)), having_clmn_type.get(i).column_type)) {
+                     semantic_error.add(
+                             "The value " + having_val.get(i) + " is not compatible with the " + having_clmn_type.get(i).column_name
+                                     + " column; the column is of type " + having_clmn_type.get(i).column_type + ".");
+                 }
+             }
+         }
+   
+         // SEMANTIC CHECK
+         // at this point, all the column names were inserted into having_clmn
+         // all the values were inserted into having_val
+         // all the relational operators were inserted into having_oper
+         // we need to make sure all relational operators are compatible with
+         // the values being passed
+   
+         if (!is_semantic_error() && !is_parse_error()) {
+             // only do this check if there are no current semantic errors
+             for (int i = 0; i < having_clmn_type.size(); i++) {
+                 if (!is_relational_operator_valid(get_type(having_val.get(i)), having_oper.get(i))) {
+                     semantic_error.add("The value " + having_val.get(i)
+                             + " is not compatible with the relational operator " + having_oper.get(i) + ".");
+                 }
+             }
+         }
+    }
+    
     // parsing
     private static void where() {
         condition_1();
@@ -1052,8 +1244,12 @@ public class Project {
 
             // SEMANTIC OPERATION
             // add this to temp11
-            if (!is_semantic_error() && !is_parse_error())
-                temp11.add(tokens.get(index - 1).value);
+            if (!is_semantic_error() && !is_parse_error()){
+               if(in_having)
+                  having_sep.add(tokens.get(index - 1).value);
+               else
+                  temp11.add(tokens.get(index - 1).value);
+            }
 
             condition_1();
             condition_2();
@@ -1069,7 +1265,10 @@ public class Project {
             index++;
 
             // this will add the token the list of relational operators
-            temp7.add(tokens.get(index - 1).value);
+            if(in_having){
+               having_oper.add(tokens.get(index - 1).value);
+            } else
+               temp7.add(tokens.get(index - 1).value);
         } else
             parse_error.add(tokens.get(index).value + " is not valid; expecting a relational operator.");
     }
@@ -1193,6 +1392,8 @@ public class Project {
                 if (in_where) {
                     // System.out.println("IN TRUE!");
                     temp1.add(tokens.get(index - 1).value);
+                } else if(in_having) {
+                    having_clmn.add(tokens.get(index - 1).value);
                 } else {
                     // System.out.println("IN FALSE!");
                     temp9.add(tokens.get(index - 1).value);
@@ -1229,6 +1430,8 @@ public class Project {
                 if (in_where) {
                     // System.out.println("IN TRUE!");
                     temp1.add(tokens.get(index - 1).value);
+                } else if(in_having) {
+                    having_clmn.add(tokens.get(index - 1).value);
                 } else {
                     // System.out.println("IN FALSE!");
                     temp9.add(tokens.get(index - 1).value);
@@ -1295,6 +1498,19 @@ public class Project {
         else 
         {
             parse_error.add(tokens.get(index).value + " is not a column name.");
+        }
+        
+        if(tokens.get(index).value.equals("AS"))
+        {
+            index++;
+            if (tokens.get(index).type.equals("attribute")) {
+               asClmn_name.add(tokens.get(index).value);
+               index++;
+            } else 
+               parse_error.add("Expecting an attribute following AS");
+        } 
+        else {
+            asClmn_name.add("NULL");
         }
     }
 
@@ -1655,18 +1871,6 @@ public class Project {
             parse_error.add(tokens.get(index).value + " is not valid; expecting a field type.");
     }
 
-    // parsing
-    private static void cube() {
-        //method stub for cube
-        //to be implemented once aggregate functions are implemented (or at least partially)
-    }
-
-    // parsing
-    private static void rollup() {
-        //method stub for rollup
-        //to be implemented once aggregate functions are implemented (or at least partially)
-    }
-
     // cleans string
     private static String clean(String input) {
         // replace all new lines with spaces
@@ -1840,7 +2044,17 @@ public class Project {
         temp12.clear();
         temp13.clear();
         AggFunc.clear();
+        groupColumns.clear();
+        groupingSets.clear();
+        having_clmn.clear();
+        having_clmn_type.clear();
+        having_oper.clear();
+        having_val.clear();
+        having_sep.clear();
+        asClmn_name.clear();
         in_where = false;
+        in_having = false;
+        groupType = "";
         table_name = "";
         command = "";
 
@@ -1969,7 +2183,8 @@ public class Project {
                 || input.equals("LIST") || input.equals("TABLES") || input.equals("OR") || input.equals("AND")
                 || input.equals("COUNT") || input.equals("AVG") || input.equals("AVERAGE") || input.equals("SUM") 
                 || input.equals("MIN") || input.equals("MINIMUM") || input.equals("MAX") || input.equals("MAXIMUM")
-                || input.equals("CUBE") || input.equals("ROLLUP");
+                || input.equals("CUBE") || input.equals("ROLLUP") || input.equals("HAVING") || input.equals("GROUPING")
+                || input.equals("BY") || input.equals("AS");
 
     }
 
@@ -2738,8 +2953,12 @@ public class Project {
                 PotentiallyAListOfColumns.add(get_column(table_name, a));
 
             // display the column names
-            for (Column aTemp10 : PotentiallyAListOfColumns) {
-                System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
+            for (int i = 0; i < PotentiallyAListOfColumns.size(); i++){
+                Column aTemp10 = PotentiallyAListOfColumns.get(i);
+                if(asClmn_name.get(i).equals("NULL"))
+                    System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
+                else
+                    System.out.print(display(asClmn_name.get(i), aTemp10) + "  ");
             }
             // display the dividing line between columns and tuples
             System.out.println("");
@@ -2752,7 +2971,7 @@ public class Project {
             // at this point, all we're missing is the actual rows
             @SuppressWarnings("unchecked")
             ArrayList<Record> r = (ArrayList<Record>) Database.tables.get(table_name).records.clone();
-
+            ArrayList<Record> fr = new ArrayList<Record>();
             ArrayList<Integer> colIndexes = new ArrayList<>();
 
             // Apply Grouping clauses
@@ -2761,96 +2980,78 @@ public class Project {
                 int c = get_column_index(col.column_name);
                 colIndexes.add(c);
             }
-
-            ArrayList<ArrayList<String>> groups = new ArrayList<>();
-            ArrayList<Record> moveToGroup = new ArrayList<>();
-            ArrayList<Record> forAggFunc = new ArrayList<>();
             
-
-            if (colIndexes.size() > 0) {
-                for (Record record : r) {
-                    ArrayList<String> currentValues = new ArrayList<>();
-                    Record rec = null;
-                    
-                    for (int i : colIndexes) {
-                        currentValues.add(record.listofCells.get(i).getFirstValue());
-                    }
-
-                    if (groups.contains(currentValues)) {
-                        moveToGroup.add(record);
-                        for(int j = 0; j < groups.size(); j++){
-                           if(groups.get(j).equals(currentValues)){
-                              rec = cloneRecord(forAggFunc.get(j));
-                              r.set(r.indexOf(forAggFunc.get(j)), execute_aggregate(rec, record));
-                              forAggFunc.set(j, rec);
-                              break;
-                           }
-                        }
-                    } else {
-                        forAggFunc.add(record);
-                        groups.add(currentValues);
-                    }
-
-                }
-            } else if(AggFunc.contains("SUM") || AggFunc.contains("AVG") || AggFunc.contains("MIN") ||
-                  AggFunc.contains("MAX") || AggFunc.contains("COUNT")) {
-               int j = 0;
-               Record rec = null;
-               
-               for (Record record : r) {
-                  if (execute_where(record)) {
-                     rec = cloneRecord(record);
-                     moveToGroup.add(record);
-                     r.add(rec);
-                     break;
+            //execute group by clause, else return a list of records
+            switch(groupType){
+               case "GROUP BY":
+                  ArrayList<Record> tempList = new ArrayList<Record>();
+                  fr.addAll(set_nulls(execute_group_functions(r, colIndexes),colIndexes));
+                  for (Record aR : fr) {
+                     if(execute_having(aR))
+                        tempList.add(aR);
                   }
-                  moveToGroup.add(record);
-                  j++;
-               }
-               
-               if(rec != null){
-                  for(int i = j + 1; i < r.size(); i++){
-                     if(rec != r.get(i)){
-                        if (execute_where(r.get(i))) {
-                           rec = execute_aggregate(rec, r.get(i));
-                        }
-                        moveToGroup.add(r.get(i));
+                  
+                  fr = tempList;
+                  break;
+               case "GROUPING SETS":
+                  if(groupingSets.size() != 0) {
+                     for (int j = 0; j < groupingSets.size(); j++) {
+                         groupColumns = groupingSets.get(j);
+                         ArrayList<Integer> colmns = new ArrayList<>();
+                         for (int i = 0; i < groupColumns.size(); i++) {
+                            Column col = get_column(table_name, groupColumns.get(i));
+                            int c = get_column_index(col.column_name);
+                            colmns.add(c);
+                         }
+                         fr.addAll(set_nulls(execute_group_functions(r, colmns),colmns));
                      }
+                  } else
+                     fr.addAll(execute_group_functions(r, colIndexes));
+                  break;
+               case "ROLLUP":
+                  ArrayList<Integer> colmns = (ArrayList<Integer>) colIndexes.clone();
+                  for(int i = groupColumns.size(); i > -1; i--)
+                  {
+                     if(i != groupColumns.size())
+                     {
+                        colmns.remove(i);
+                     }
+                     fr.addAll(set_nulls(execute_group_functions(r, colmns),colmns));
                   }
-               }
+                  break;
+               case "CUBE":
+            		for(int i = groupColumns.size(); i > -1; i--)
+                  {
+               		colmns = new ArrayList<>();
+                     fr.addAll(execute_cube_function(colIndexes, colIndexes.size(), i, 0, colmns, 0, r, new ArrayList<Record>()));
+                  }
+                  break;
+               default:
+                  fr.addAll(execute_group_functions(r, colIndexes));
+                  break;
             }
-
-            for (Record record : moveToGroup) {
-                r.remove(record);
-            }
-
-            groupColumns = new ArrayList<String>();
 
             // now we're looking at the individual rows
             int c;
             String d;
             
             // loop through each record
-            for (Record aR : r) {
+            for (Record aR : fr) {
                 // we can only display the columns being displayed
                 // so we must loop through each column to display
+                 printSELECT(aR);
 
-                // only include the record if it qualified the WHERE clause
-                if (execute_where(aR)) {
-                    printSELECT(aR);
+                 // if we're in a wSELECT statement
+                 // display the time at the end
+                 if (tokens.get(0).value.equals("WSELECT")) {
+                     DateFormat dFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy");
+                     Date tempDate = aR.record_date;
+                     System.out.print(" updated " + formatDateToString(tempDate));
+                     printWSELECT(aR);
+                 }
 
-                    // if we're in a wSELECT statement
-                    // display the time at the end
-                    if (tokens.get(0).value.equals("WSELECT")) {
-                        DateFormat dFormat = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy");
-                        Date tempDate = aR.record_date;
-                        System.out.print(" updated " + formatDateToString(tempDate));
-                        printWSELECT(aR);
-                    }
-
-                    // display new line for next record
-                    System.out.println("");
-                }
+                 // display new line for next record
+                 System.out.println("");
             }
 
         } else
@@ -2861,6 +3062,65 @@ public class Project {
         return new SimpleDateFormat("yyyy MMM dd hh:mm:ss a").format(tempDate);
     }
 
+    private static ArrayList<Record> execute_cube_function(ArrayList<Integer> colIndexes, int n, int r, 
+               int index, ArrayList<Integer> colmns, int i, ArrayList<Record> recs, ArrayList<Record> fr)
+    {
+   		if (index == r)
+   		{
+   			fr.addAll(set_nulls(execute_group_functions(recs, colmns),colmns));
+   		   return fr;
+   		}
+   
+   		// When no more elements are there to put in colmns
+   		if (i >= n)
+   		   return fr;
+   
+   		// current is included, put next at next location
+         if(colmns.size() > index){
+   		   colmns.set(index, colIndexes.get(i));
+         } 
+         else {
+            colmns.add(colIndexes.get(i));
+         }
+   		execute_cube_function(colIndexes, n, r, index+1, colmns, i+1, recs, fr);
+   
+   		// current is excluded, replace it with next 
+   		execute_cube_function(colIndexes, n, r, index, colmns, i+1, recs, fr);
+         return fr;
+    }
+    
+    private static ArrayList<Record> set_nulls(ArrayList<Record> fr, ArrayList<Integer> clmns){
+        ArrayList<Integer> cln = new ArrayList<>();
+        Column col;
+        int c;
+        
+        //get the columns with aggregate functions
+        //they dont need to be null when using a 
+        //Group by statment
+        for (int i = 0; i < temp9.size(); i++) {
+            col = get_column(table_name, temp9.get(i));
+            c = get_column_index(col.column_name);
+            if(!AggFunc.get(i).equals("NULL")){
+               cln.add(c);
+            }
+        }
+        
+        cln.addAll(clmns);
+        //set the value of the columns that are
+        //not inside the group by statment nor
+        //aggregate function to null
+        for (Record record : fr) {
+            Record rec = cloneRecord(record);
+            fr.set(fr.indexOf(record), rec);
+            for (int i = 0; i < Database.tables.get(table_name).columns.size(); i++){
+               if(!cln.contains(i))
+                   rec.listofCells.get(i).cellTuples.get(0).value = "NULL";
+            }
+        }
+        
+        return fr;
+    }
+   
     private static void printSELECT(Record aR) {
         int c;
         String d = "";
@@ -2903,6 +3163,72 @@ public class Project {
             System.out.print(d);
 //            System.out.flush();
         }
+    }
+    
+    private static ArrayList<Record> execute_group_functions(ArrayList<Record> r, ArrayList<Integer> colIndexes)
+    {
+      ArrayList<ArrayList<String>> groups = new ArrayList<>();
+      ArrayList<Record> finalList = new ArrayList<>();
+      
+      if (colIndexes.size() > 0) {
+          for (Record record : r) { 
+              // only include the record if it qualified the WHERE clause
+              if (execute_where(record)) {
+                 ArrayList<String> currentValues = new ArrayList<>();
+                 Record rec = null;
+                 
+                 for (int i : colIndexes) {
+                     currentValues.add(record.listofCells.get(i).getFirstValue());
+                 }
+   
+                 if (groups.contains(currentValues)) {
+                     for(int j = 0; j < groups.size(); j++){
+                        if(groups.get(j).equals(currentValues)){
+                           rec = cloneRecord(finalList.get(j));
+                           finalList.set(j, execute_aggregate(rec, record));
+                           break;
+                        }
+                     }
+                 } else {
+                     finalList.add(record);
+                     groups.add(currentValues);
+                 }
+              }
+          }
+      } else if(AggFunc.contains("SUM") || AggFunc.contains("AVG") || AggFunc.contains("MIN") ||
+            AggFunc.contains("MAX") || AggFunc.contains("COUNT")) {
+         int j = 0;
+         Record rec = null;
+         
+         for (Record record : r) {
+            // only include the record if it qualified the WHERE clause
+            if (execute_where(record)) {
+               rec = cloneRecord(record);
+               finalList.add(rec);
+               break;
+            }
+            j++;
+         }
+         
+         if(rec != null){
+            for(int i = j + 1; i < r.size(); i++){
+               if(rec != r.get(i)){
+                  if (execute_where(r.get(i))) {
+                     rec = execute_aggregate(rec, r.get(i));
+                  }
+               }
+            }
+         }
+      } else {
+          for (Record record : r) {
+              // only include the record if it qualified the WHERE clause
+              if (execute_where(record)) {
+                 finalList.add(record);
+              }
+          }
+      }
+      
+      return finalList;
     }
 
     private static void printWSELECT(Record aR) {
@@ -3005,7 +3331,130 @@ public class Project {
             output = value;
         return output;
     }
+    private static boolean execute_having (Record r) {
+        if(having_clmn.size() == 0){
+            return true;
+        } else {
+            // there is a where clause used
+            // evaluate the where clause
 
+            int c;
+            Boolean previous_condition = null;
+            Boolean current_condition = null;
+            String temp_column_value, temp_literal_value, temp_operator;
+            Column col;
+            Float t_c_v, t_l_v;
+            for (int i = 0; i < having_clmn.size(); i++) {
+                // move over the current and previous results
+                if (i != 0) {
+                    previous_condition = current_condition;
+                    current_condition = null;
+                }
+
+                // get the column
+                col = get_column(table_name, having_clmn.get(i));
+
+                // get the index number of the column
+                c = get_column_index(col.column_name);
+
+                // now we get the variables
+                temp_column_value = r.listofCells.get(c).getFirstValue().toLowerCase();
+                temp_literal_value = having_val.get(i).toLowerCase();
+                temp_operator = having_oper.get(i);
+
+                // at this point, we have all the variables needed for
+                // evaluation
+                if (having_clmn_type.get(i).column_type.equals("VARCHAR") || having_clmn_type.get(i).column_type.equals("CHAR")) {
+                    // we're evaluating a string
+
+                    switch (temp_operator) {
+                        case "=":
+                            current_condition = temp_column_value.equals(temp_literal_value);
+                            break;
+                        case "<>":
+                            current_condition = !temp_column_value.equals(temp_literal_value);
+                            break;
+                        case "!=":
+                            current_condition = !temp_column_value.equals(temp_literal_value);
+                            break;
+                    }
+                } else {
+                    // we're evaluating a number of some kind
+
+                    // get the temp column value
+                    if (temp_column_value.toUpperCase().equals("NULL"))
+                        t_c_v = null;
+                    else
+                        t_c_v = Float.parseFloat(temp_column_value);
+                    // get the temp literal value
+                    if (temp_literal_value.toUpperCase().equals("NULL"))
+                        t_l_v = null;
+                    else
+                        t_l_v = Float.parseFloat(temp_literal_value);
+
+                    // here is where we do the actual evaluation
+                    if (t_c_v != null) {
+                        switch (temp_operator) {
+                            case "=":
+                                current_condition = t_c_v.equals(t_l_v);
+                                break;
+                            case "<>":
+                            case "!=":
+                                current_condition = !t_c_v.equals(t_l_v);
+
+                                break;
+                            case ">":
+                                current_condition = t_c_v > t_l_v;
+                                break;
+                            case ">=":
+                                current_condition = t_c_v >= t_l_v;
+                                break;
+                            case "<":
+                                current_condition = t_c_v < t_l_v;
+                                break;
+                            case "<=":
+                                current_condition = t_c_v <= t_l_v;
+                                break;
+                        }
+                    } else {
+                        // the row value is null
+                        switch (temp_operator) {
+                            case "=":
+                                current_condition = t_l_v == null;
+                                break;
+                            case "<>":
+                                current_condition = t_l_v != null;
+                                break;
+                            case "!=":
+                                current_condition = t_l_v != null;
+                                break;
+                            default:
+                                // else, default NULL for all other operations
+                                current_condition = false;
+                                break;
+                        }
+                    }
+                }
+
+                // at this point, we've evaluated the current command
+                // now we need to evaluate it against the AND/OR command
+                // ONLY DO THIS IF we're not in the 0 index
+                if (i != 0) {
+                    String condition_separator = having_sep.get(i - 1);
+
+                    // now depending on the AND/OR, we evaluate
+                    if (condition_separator.equals("AND")) {
+                        current_condition = current_condition && previous_condition;
+                    } else if (condition_separator.equals("OR")) {
+                        current_condition = current_condition || previous_condition;
+                    }
+
+                }
+            }
+            // return the condition result
+            return current_condition;
+        }
+    }
     // checks if record qualifies
     private static boolean execute_where(Record r) {
 
