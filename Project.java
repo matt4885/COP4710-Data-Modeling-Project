@@ -21,8 +21,8 @@ public class Project {
     private static ArrayList<ArrayList<String>> groupingSets = new ArrayList<>();
     private static ArrayList<String> AggFunc = new ArrayList<>();
     private static String groupType;
-    private static boolean auto_input = true;
-    private static boolean display_debugger_stuff = true;
+    private static boolean auto_input = false;
+    private static boolean display_debugger_stuff = false;
     private static Scanner scanning = new Scanner(System.in);
     private static String input = "";
     public static int countCounter=0;
@@ -1478,12 +1478,7 @@ public class Project {
             
             if (tokens.get(index).value.equals("(")) {
                index++;
-               if (tokens.get(index).value.equals("*")) {
-                  index++;
-               } 
-               else{
                   column_1();
-               }
                if (tokens.get(index).value.equals(")")) {
                   index++;
                } 
