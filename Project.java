@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.Arrays;
 
-//Group A1
+//Group A1 Since Day 1
 //COP 4710 - Data Modeling
 //wSQL Engine Project
 
@@ -2950,10 +2950,14 @@ public class Project {
             // display the column names
             for (int i = 0; i < PotentiallyAListOfColumns.size(); i++){
                 Column aTemp10 = PotentiallyAListOfColumns.get(i);
-                if(asClmn_name.get(i).equals("NULL"))
-                    System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
+                if(asClmn_name.size() > 0){
+                   if(asClmn_name.get(i).equals("NULL"))
+                       System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
+                   else
+                       System.out.print(display(asClmn_name.get(i), aTemp10) + "  ");
+                } 
                 else
-                    System.out.print(display(asClmn_name.get(i), aTemp10) + "  ");
+                    System.out.print(display(aTemp10.column_name, aTemp10) + "  ");
             }
             // display the dividing line between columns and tuples
             System.out.println("");
@@ -3696,7 +3700,7 @@ public class Project {
        
        for(int i = 1; i < val.cellTuples.size(); i++){
           count++;
-          if(isNumeric(val.cellTuples.get(i).value))
+          if(!isNumeric(val.cellTuples.get(i).value))
           {
             total = total + Integer.parseInt(val.cellTuples.get(i).value);
           } 
